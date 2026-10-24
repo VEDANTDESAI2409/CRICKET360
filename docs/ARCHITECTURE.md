@@ -97,19 +97,45 @@ The IPC layer is organized into modular channels:
 - `inventory:adjustStock` - Stock reconciliation with mandatory reason codes, variance calculation, and immutable ledger insertion.
 - `inventory:getStockMovements` - Real-time audit trail of all historical stock movements with before/after balances.
 - `masters:getCategories` / `masters:getBrands` / `masters:getUnits` / `masters:getHsnCodes` - Master taxonomy and GST registry queries.
-- `db:billing:*` - POS invoice creation, payment recording, cancellation (Milestone 6).
+- `billing:createInvoice` - Atomic sale creation recording invoice, items, payments, stock movement deductions, and balance updates.
+- `billing:getInvoices` - Filterable sales invoice history (by date range, customer, payment status, completion status).
+- `billing:getInvoiceById` - Full invoice query returning items, taxes, customer snapshots, and payment records.
+- `billing:cancelInvoice` - Audit-safe invoice voiding workflow restoring variant and parent product stock with compensatory `SALE_RETURN` movements.
+- `billing:getNextInvoiceNumber` - Atomic generation of collision-free sequential invoice numbers (e.g. `CR360-1001`).
+- `billing:getShopSettings` - Shop profile snapshot for tax invoice headers and GSTIN/State verification.
+- `customers:search` - Customer lookup by name, phone, or GSTIN with walk-in option.
+- `customers:create` - Quick customer creation modal during billing checkout.
 - `db:purchases:*` - Purchase bill entry, supplier returns (Milestone 5).
-- `db:parties:*` - Customers, suppliers, ledgers, credit balances (Milestone 5 / 7).
+- `db:parties:*` - Supplier directories, credit ledgers (Milestone 5 / 7).
 - `db:reports:*` - GST summaries, sales reports, inventory valuations (Milestone 8).
-- `system:print:*` - Silent printing to thermal or default printer, A4 print preview (Milestone 6).
+- `system:print:*` - Silent printing to thermal or default printer, A4 print preview (Milestone 4 / 6).
 - `system:backup:*` - Manual backup generation, database restore, integrity checks (Milestone 9).
 
-### 4.1 Transactional Guarantees for Catalog & Stock Operations
-All stock mutations and variant matrix insertions execute within synchronous `db.transaction()` boundaries:
-1. **Opening Stock Ledger Sync:** When creating a product or variant with an opening stock quantity > 0, an immutable `stock_movements` record (`movement_type = 'OPENING_STOCK'`) is inserted in the exact same transaction.
-2. **Variant Stock Rollup:** Updating stock for any product variant immediately recalculates and updates the parent product's cumulative `stock_quantity`.
-3. **Safe Product Deletion Guard:** Products associated with historical `SALE_INVOICE` or `PURCHASE_RECEIPT` movements cannot be permanently deleted; the repository raises an explicit error advising deactivation instead.
-4. **Reason-Enforced Adjustments:** Adjustments mandate a valid reason code (`PHYSICAL_AUDIT_MISMATCH`, `DAMAGED_IN_STORE`, `EXPIRED_DEFECTIVE`, `SAMPLE_DEMO`, `THEFT_OR_LOSS`, `FOUND_SURPLUS`, `OTHER`) recorded both in `stock_adjustments` and `stock_movements`.
+### 4.1 Transactional Guarantees for Billing, Catalog & Stock Operations
+All stock mutations and billing workflows execute within synchronous `db.transaction()` boundaries:
+1. **Atomic Sale Creation (`billing:createInvoice`):**
+   - Validates available stock for each line item (standard products and variants).
+   - Inserts into `sales_invoices` with complete fiscal snapshots.
+   - Inserts each item into `sales_invoice_items` with historical snapshots of unit price, HSN, tax rate, and tax breakdown.
+   - Deducts stock immediately from `product_variants` (if applicable) and parent `products`.
+   - Records immutable `stock_movements` with `movement_type = 'SALE_INVOICE'` and reference ID.
+   - Inserts tender records into `payments`.
+   - If unpaid or partially paid, updates the customer's outstanding balance in `customers`.
+   - Updates sequential invoice counter in `app_settings`.
+2. **Audit-Safe Invoice Cancellation (`billing:cancelInvoice`):**
+   - Verifies invoice status is `COMPLETED` (cannot void already cancelled invoices).
+   - Updates invoice status to `CANCELLED` with mandatory reason and timestamp.
+   - Restores stock for all invoice items (both variant stock and parent product cumulative stock).
+   - Inserts compensatory `stock_movements` with `movement_type = 'SALE_RETURN'`.
+   - If unpaid balance was added to the customer ledger, reverses the outstanding balance.
+3. **Retail Tax Back-Calculation & Paise Precision:**
+   - Shelf prices are tax-inclusive: `Taxable Value = Math.round(Gross Amount / (1 + Tax Rate / 100))`.
+   - Total GST is split into CGST and SGST for intra-state (equal state codes), with odd paise assigned to CGST to guarantee `CGST + SGST === Total Tax`.
+   - Inter-state transactions allocate 100% of tax to IGST.
+   - Round-off to nearest Rupee (nearest 100 paise) is calculated and recorded in `round_off_paise`.
+4. **Variant Stock Rollup:** Updating stock for any product variant immediately recalculates and updates the parent product's cumulative `stock_quantity`.
+5. **Safe Product Deletion Guard:** Products associated with historical `SALE_INVOICE` or `PURCHASE_RECEIPT` movements cannot be permanently deleted; the repository raises an explicit error advising deactivation instead.
+6. **Reason-Enforced Adjustments:** Adjustments mandate a valid reason code (`PHYSICAL_AUDIT_MISMATCH`, `DAMAGED_IN_STORE`, `EXPIRED_DEFECTIVE`, `SAMPLE_DEMO`, `THEFT_OR_LOSS`, `FOUND_SURPLUS`, `OTHER`) recorded both in `stock_adjustments` and `stock_movements`.
 
 
 ---

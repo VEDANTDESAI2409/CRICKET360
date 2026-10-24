@@ -230,8 +230,132 @@ export interface Customer {
   name: string;
   phone?: string;
   gstin?: string;
+  address?: string;
+  state_code?: string;
+  credit_limit_paise?: number;
   balance_paise: number;
   is_active: number;
+  created_at?: string;
+}
+
+export type PaymentMode = 'CASH' | 'UPI' | 'CARD' | 'BANK_TRANSFER' | 'CHEQUE';
+export type PaymentStatus = 'PAID' | 'PARTIALLY_PAID' | 'UNPAID';
+export type InvoiceStatus = 'COMPLETED' | 'CANCELLED' | 'RETURNED';
+
+export interface SalesInvoiceItem {
+  id: number;
+  invoice_id: number;
+  product_id: number;
+  variant_id?: number | null;
+  product_name_snapshot: string;
+  variant_name_snapshot?: string | null;
+  sku_snapshot: string;
+  barcode_snapshot?: string | null;
+  hsn_code_snapshot: string;
+  unit_snapshot: string;
+  quantity: number;
+  unit_price_paise: number;
+  mrp_paise: number;
+  discount_amount_paise: number;
+  taxable_amount_paise: number;
+  tax_rate_percent: number;
+  cgst_amount_paise: number;
+  sgst_amount_paise: number;
+  igst_amount_paise: number;
+  total_amount_paise: number;
+  created_at: string;
+}
+
+export interface PaymentRecord {
+  id: number;
+  payment_number: string;
+  payment_date: string;
+  party_type: 'CUSTOMER' | 'SUPPLIER';
+  party_id: number;
+  invoice_id?: number | null;
+  amount_paise: number;
+  payment_mode: PaymentMode;
+  reference_number?: string | null;
+  notes?: string | null;
+  user_id?: number | null;
+  created_at: string;
+}
+
+export interface SalesInvoice {
+  id: number;
+  invoice_number: string;
+  invoice_date: string;
+  customer_id?: number | null;
+  customer_name_snapshot: string;
+  customer_phone_snapshot?: string | null;
+  customer_gstin_snapshot?: string | null;
+  customer_address_snapshot?: string | null;
+  place_of_supply: string;
+  is_inter_state: number;
+  taxable_amount_paise: number;
+  cgst_amount_paise: number;
+  sgst_amount_paise: number;
+  igst_amount_paise: number;
+  total_tax_paise: number;
+  discount_amount_paise: number;
+  round_off_paise: number;
+  grand_total_paise: number;
+  paid_amount_paise: number;
+  balance_amount_paise: number;
+  payment_status: PaymentStatus;
+  status: InvoiceStatus;
+  cancellation_reason?: string | null;
+  cancelled_at?: string | null;
+  notes?: string | null;
+  user_id?: number | null;
+  created_at: string;
+  items?: SalesInvoiceItem[];
+  payments?: PaymentRecord[];
+}
+
+export interface CreateInvoiceItemInput {
+  product_id: number;
+  variant_id?: number | null;
+  quantity: number;
+  unit_price_paise: number;
+  discount_amount_paise?: number;
+}
+
+export interface PaymentTenderInput {
+  mode: PaymentMode;
+  amount_paise: number;
+  reference_number?: string;
+}
+
+export interface CreateInvoiceInput {
+  customer_id?: number | null;
+  customer_name?: string;
+  customer_phone?: string;
+  customer_gstin?: string;
+  customer_address?: string;
+  customer_state_code?: string;
+  items: CreateInvoiceItemInput[];
+  discount_amount_paise?: number;
+  payments: PaymentTenderInput[];
+  notes?: string;
+}
+
+export interface InvoiceFilterQuery {
+  search?: string;
+  status?: InvoiceStatus;
+  start_date?: string;
+  end_date?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface CreateCustomerInput {
+  name: string;
+  phone?: string;
+  gstin?: string;
+  address?: string;
+  state_code?: string;
+  credit_limit_paise?: number;
 }
 
 export interface User {

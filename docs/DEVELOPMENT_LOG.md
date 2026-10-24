@@ -1,5 +1,63 @@
 # Cricket360: Development Work Log
 
+## Log Entry: 2026-10-25 - Milestone 4: POS & GST Billing
+
+### Summary of Work Completed
+- **Point-of-Sale Billing Register (`src/renderer/features/billing/PosBilling.tsx`):**
+  - High-speed retail checkout interface with instant search across product name, SKU, and barcode.
+  - Interactive variant selector modal for bats (sizes, weights) and apparel/shoes before cart insertion.
+  - Interactive cart table with quantity stepper, direct editing, item deletion, and real-time stock threshold validation.
+  - Product-level and invoice-level discount configuration (percentage or fixed amount) with proportional integer-paise distribution across items.
+  - Dynamic GST calculations supporting intra-state transactions (CGST 50% + SGST 50%) and inter-state transactions (IGST 100%) based on customer State code.
+  - Multi-tender checkout supporting Cash, UPI (with simulated dynamic QR code), Card, and Split payments with exact tender sum validation.
+  - Collision-free sequential invoice numbering (e.g. `CR360-1001`) with configurable shop prefix from `app_settings`.
+  - Customer selection with one-click Walk-in Customer support and quick customer registration modal.
+  - Comprehensive Sales History register with date filters, status indicators (`COMPLETED` / `CANCELLED`), invoice preview, and print actions.
+  - Audit-safe invoice cancellation/void workflow requiring mandatory cancellation reason and automatically restoring stock with compensatory `SALE_RETURN` ledger records.
+  - Dual layout printable GST Tax Invoice modal: A4 Tax Invoice and 80mm Thermal Receipt with shop details, GSTIN, HSN summaries, and amount in words.
+- **Financial Precision Engine (`src/shared/utils/billingMath.ts`):**
+  - Pure integer paise arithmetic eliminating IEEE 754 floating-point drift.
+  - Tax-inclusive shelf price back-calculation: `Taxable = Math.round(Gross / (1 + Rate / 100))`.
+  - Odd paise resolution ensuring `CGST + SGST === Total Tax` exactly.
+  - Nearest Rupee round-off calculation (`round_off_paise`).
+  - Indian numbering currency in words converter ("Rupees ... Only").
+- **Database Migration `004_pos_and_gst_billing.sql`:**
+  - Added cancellation audit columns (`cancellation_reason`, `cancelled_at`, `notes`) to `sales_invoices`.
+  - Created `sales_invoice_items` with immutable line-item snapshots of product name, variant, HSN, unit, price, and tax breakdown.
+  - Created `payments` table for recording individual payment tenders.
+  - Seeded inter-state customer accounts in Gujarat (`24`) and Delhi (`07`).
+  - Initialized invoice numbering settings (`invoice_prefix` = `CR360-`, `next_invoice_number` = `1001`).
+- **Transactional Repositories & Typed IPC:**
+  - `src/main/db/billingRepo.ts`: Atomic sale creation and cancellation transactions with stock movement synchronization and balance tracking.
+  - `src/main/ipc/handlers.ts`: Zod-validated IPC endpoints for `billing:createInvoice`, `billing:getInvoices`, `billing:getInvoiceById`, `billing:cancelInvoice`, `billing:getNextInvoiceNumber`, `billing:getShopSettings`, `customers:search`, and `customers:create`.
+  - `src/preload/index.ts`: Expose `window.api.billing` and `window.api.customers`.
+- **Navigation Integration:**
+  - Activated "POS & Billing" sidebar item in `Sidebar.tsx` and wired active views in `App.tsx`.
+- **Verification & Test Results:**
+  - **TypeScript:** `npm run typecheck` (`tsc --noEmit`) -> 0 errors.
+  - **Renderer Build:** `npm run build:renderer` (`vite build`) -> 0 errors.
+  - **Electron Build:** `npm run build:electron` (`esbuild`) -> 0 errors.
+  - **Test Suite:** `npm test` (`vitest run`):
+    - `tests/unit/utils/billingMath.test.ts` (6 tests passed)
+    - `tests/unit/db/billingRepo.test.ts` (8 tests passed)
+    - `tests/unit/ipc/validation.test.ts` (5 tests passed)
+    - `tests/components/PosBilling.test.tsx` (5 tests passed)
+    - `tests/unit/db/productRepo.test.ts` (8 tests passed)
+    - `tests/unit/db/inventoryRepo.test.ts` (5 tests passed)
+    - `tests/unit/db/dashboardRepo.test.ts` (6 tests passed)
+    - `tests/unit/db/sqlite-foundation.test.ts` (6 tests passed)
+    - `tests/components/ProductCatalog.test.tsx` (4 tests passed)
+    - `tests/components/InventoryManagement.test.tsx` (3 tests passed)
+    - `tests/components/Dashboard.test.tsx` (5 tests passed)
+    - `tests/components/UiShell.test.tsx` (6 tests passed)
+    - **Total:** 67 passed across 12 test files, 0 failed.
+  - **Smoke Test:** `npm run smoke-test` -> Successfully executed with Electron runtime; applied migrations 001, 002, 003, and 004.
+
+### Next Milestone
+- Proceed with **Milestone 5: Purchases & Supplier Management** (Supplier master directory, purchase inward entry, stock increments, purchase returns).
+
+---
+
 ## Log Entry: 2026-10-25 - Milestone 3: Product Catalog & Inventory Management
 
 ### Summary of Work Completed

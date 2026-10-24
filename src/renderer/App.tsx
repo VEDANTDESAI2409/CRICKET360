@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { Dashboard } from './features/dashboard/Dashboard';
 import { ProductCatalog } from './features/products/ProductCatalog';
 import { InventoryManagement } from './features/inventory/InventoryManagement';
+import { PosBilling } from './features/billing/PosBilling';
 import { Card } from './components/Card';
 import { Button } from './components/Button';
 import {
@@ -236,6 +237,8 @@ export const App: React.FC = () => {
               onNavigateToModule={setCurrentModule}
               externalSearchQuery={globalSearch}
             />
+          ) : currentModule === 'billing' ? (
+            <PosBilling />
           ) : currentModule === 'products' ? (
             <ProductCatalog
               onNavigateToModule={setCurrentModule}

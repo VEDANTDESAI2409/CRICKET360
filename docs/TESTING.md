@@ -21,40 +21,48 @@ tests/
 │   │   ├── sqlite-foundation.test.ts   # 6 tests: WAL mode, foreign keys, atomic migration rollback
 │   │   ├── dashboardRepo.test.ts       # 6 tests: Aggregate queries, cancellations exclusion, date boundaries
 │   │   ├── productRepo.test.ts         # 8 tests: CRUD, variants, transactions, safe deletion, unique SKU/barcodes
-│   │   └── inventoryRepo.test.ts       # 5 tests: Adjustments, variance, ledger audit trail, variant rollup
-│   └── ipc/
-│       └── validation.test.ts          # 3 tests: Zod IPC boundary validation for settings
+│   │   ├── inventoryRepo.test.ts       # 5 tests: Adjustments, variance, ledger audit trail, variant rollup
+│   │   └── billingRepo.test.ts         # 8 tests: Sequential numbering, atomic sale creation, stock deduction, split payment, cancellation & restitution
+│   ├── ipc/
+│   │   └── validation.test.ts          # 5 tests: Zod IPC boundary validation for billing, cancellation, settings
+│   └── utils/
+│       └── billingMath.test.ts         # 6 tests: Integer paise tax math, intra/inter-state split, rounding, discounts, words
 └── components/
     ├── UiShell.test.tsx                # 6 tests: Button, Card, Badge, Sidebar, Header
     ├── Dashboard.test.tsx              # 5 tests: MetricCard, SearchInput, Table sorting/empty, BarChart, ProgressDonut
     ├── ProductCatalog.test.tsx         # 4 tests: Rendering, search filter, auto SKU generation/creation, view details modal
-    └── InventoryManagement.test.tsx    # 3 tests: Summary metrics, audit trail tab, physical stock adjustment & variance calculation
+    ├── InventoryManagement.test.tsx    # 3 tests: Summary metrics, audit trail tab, physical stock adjustment & variance calculation
+    └── PosBilling.test.tsx             # 5 tests: Register rendering, search & cart addition, stock limits, inter-state IGST, sale completion & print modal
 ```
 
-**Total Active Test Count:** 46 automated tests passing across 9 test files with zero regressions.
+**Total Active Test Count:** 67 automated tests passing across 12 test files with zero regressions.
 
-### Key Milestone 3 Test Cases:
-- **`productRepo.test.ts`:**
-  - Product creation with unique SKU and EAN-13 barcode generation.
-  - Multi-variant matrix generation for cricket bat sizes (SH, LH, Harrow, 6) with variant-specific SKUs.
-  - Automatic `OPENING_STOCK` movement logging when opening stock > 0.
-  - Collision-prevention on duplicate SKU or barcode.
-  - Safe deletion protection preventing deletion when historical invoice or purchase movements exist.
-  - Active/inactive toggle preserving referential integrity.
-- **`inventoryRepo.test.ts`:**
-  - Reason-mandated stock adjustments with auto-generated adjustment numbers (`ADJ-YYYYMMDD-XXXX`).
-  - Strict movement ledger immutability and balance calculations (`balance_quantity_after`).
-  - Child variant stock adjustments automatically updating parent product's cumulative stock.
-  - Safe rejection when adjusting with missing or invalid reason codes.
-- **`ProductCatalog.test.tsx`:**
-  - High-density table rendering with margins, prices in rupees, and variant count badges.
-  - Real-time client-side search by product name, SKU, or brand.
-  - Add product modal workflow with auto-generated SKU and IPC submission.
-  - View details modal showing pricing breakdown, variants list, and recent stock movements audit trail.
-- **`InventoryManagement.test.tsx`:**
-  - Summary metric cards for total stock units, inventory landed cost valuation, and low-stock warnings.
-  - Tab switching between stock reconciliation and immutable movement ledger.
-  - Stock adjustment modal calculating positive/negative variances dynamically and submitting verified physical counts.
+### Key Milestone 4 Test Cases:
+- **`billingMath.test.ts`:**
+  - Tax-inclusive back-calculation with integer paise arithmetic (`Math.round(gross / (1 + rate / 100))`).
+  - Intra-state GST splitting: assigns odd paise to CGST ensuring exact equality (`cgst + sgst === totalTax`).
+  - Inter-state tax calculation assigning 100% of GST to IGST.
+  - Multi-item tax aggregation, item discounts, and invoice-level discount proportional distribution.
+  - Round-off calculation to nearest Rupee (nearest 100 paise).
+  - Indian numbering currency in words converter (`₹ 1,120.00` -> "Rupees One Thousand One Hundred Twenty Only").
+- **`billingRepo.test.ts`:**
+  - Collision-free sequential invoice generation based on `app_settings` prefix and sequence counter.
+  - Transaction-safe sale creation with simultaneous item snapshot insertion, payments, and customer balance updates.
+  - Automatic stock deduction for standard items and variant items with parent cumulative rollup.
+  - Immutable `stock_movements` recording (`movement_type = 'SALE_INVOICE'`).
+  - Multi-tender split payment support (e.g. Cash + UPI + Card) with exact sum validation.
+  - Hard transactional rejection and rollback if attempting to sell more quantity than available stock.
+  - Invoice cancellation workflow: status updated to `CANCELLED`, compensatory `SALE_RETURN` movements logged, stock restored for all items, and customer balances reconciled.
+  - Sales history queries with date range and status filters.
+- **`validation.test.ts`:**
+  - Boundary validation for `createInvoiceSchema` ensuring valid customer IDs, positive quantities, non-empty payment tenders, and valid payment modes.
+  - Validation for `cancelInvoiceSchema` requiring non-empty cancellation reasons.
+- **`PosBilling.test.tsx`:**
+  - Register rendering with quick customer selection, walk-in option, and barcode/search input.
+  - Item addition to cart with real-time tax calculation and stock indicator.
+  - Quantity increment/decrement buttons with available stock limits.
+  - Automatic tax recalculation from CGST/SGST to IGST upon selecting an out-of-state customer.
+  - Tender completion and printable GST Tax Invoice modal rendering.
 
 ---
 

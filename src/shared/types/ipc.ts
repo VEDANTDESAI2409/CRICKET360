@@ -19,6 +19,11 @@ import {
   StockAdjustment,
   StockMovement,
   StockAdjustmentInput,
+  SalesInvoice,
+  CreateInvoiceInput,
+  InvoiceFilterQuery,
+  Customer,
+  CreateCustomerInput,
 } from './models';
 
 export type IpcResult<T> =
@@ -70,6 +75,27 @@ export interface IpcApi {
     createCategory: (name: string, code: string, description?: string) => Promise<IpcResult<Category>>;
     createBrand: (name: string, code: string) => Promise<IpcResult<Brand>>;
   };
+  billing: {
+    createInvoice: (data: CreateInvoiceInput) => Promise<IpcResult<SalesInvoice>>;
+    getInvoices: (filters?: InvoiceFilterQuery) => Promise<IpcResult<SalesInvoice[]>>;
+    getInvoiceById: (id: number) => Promise<IpcResult<SalesInvoice | null>>;
+    cancelInvoice: (invoiceId: number, reason: string) => Promise<IpcResult<SalesInvoice>>;
+    getNextInvoiceNumber: () => Promise<IpcResult<string>>;
+    getShopSettings: () => Promise<
+      IpcResult<{
+        shopName: string;
+        shopGstin: string;
+        shopAddress: string;
+        shopPhone: string;
+        shopEmail: string;
+        shopStateCode: string;
+      }>
+    >;
+  };
+  customers: {
+    search: (query?: string) => Promise<IpcResult<Customer[]>>;
+    create: (data: CreateCustomerInput) => Promise<IpcResult<Customer>>;
+  };
 }
 
 declare global {
@@ -77,3 +103,4 @@ declare global {
     api: IpcApi;
   }
 }
+

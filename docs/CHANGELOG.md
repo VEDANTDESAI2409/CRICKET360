@@ -4,6 +4,45 @@ All notable changes to the Cricket360 project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-m4] - 2026-10-25
+### Added - Milestone 4: POS & GST Billing
+- **Point-of-Sale Billing Register (`PosBilling.tsx`):**
+  - High-speed retail billing interface with instant product search by name, SKU, or barcode.
+  - Interactive variant selector modal for bats (sizes, weights) and apparel/shoes before adding to cart.
+  - Cart management with quantity steppers, direct editing, item deletion, and real-time stock threshold validation.
+  - Item-level and invoice-level discount configuration (percentage or fixed) with proportional integer-paise distribution.
+  - Dynamic GST calculations supporting intra-state transactions (CGST 50% + SGST 50%) and inter-state transactions (IGST 100%) based on customer State code.
+  - Multi-tender checkout supporting Cash, UPI (with simulated dynamic QR), Card, and Split payments with exact tender sum validation.
+  - Collision-free sequential invoice numbering (e.g. `CR360-1001`) with configurable shop prefix.
+  - Customer selection with one-click Walk-in Customer support and modal for quick on-the-fly customer registration.
+  - Comprehensive Sales History register with date filters, status indicators (`COMPLETED` / `CANCELLED`), invoice preview, and print actions.
+  - Audit-safe invoice cancellation/void workflow requiring mandatory cancellation reason and automatically restoring stock with compensatory `SALE_RETURN` ledger records.
+  - Dual layout printable GST Tax Invoice modal: A4 Tax Invoice and 80mm Thermal Receipt with shop details, GSTIN, HSN summaries, and amount in words.
+- **Financial Precision Engine (`billingMath.ts`):**
+  - Pure integer paise arithmetic eliminating IEEE 754 floating-point drift.
+  - Tax-inclusive shelf price back-calculation: `Taxable = Math.round(Gross / (1 + Rate / 100))`.
+  - Odd paise resolution ensuring `CGST + SGST === Total Tax` exactly.
+  - Nearest Rupee round-off calculation (`round_off_paise`).
+  - Indian numbering currency in words converter ("Rupees ... Only").
+- **Database Migration `004_pos_and_gst_billing.sql`:**
+  - Added cancellation audit columns (`cancellation_reason`, `cancelled_at`, `notes`) to `sales_invoices`.
+  - Created `sales_invoice_items` with immutable line-item snapshots of product name, variant, HSN, unit, price, and tax breakdown.
+  - Created `payments` table for recording individual payment tenders.
+  - Seeded inter-state customer accounts in Gujarat (`24`) and Delhi (`07`).
+  - Initialized invoice numbering settings (`invoice_prefix` = `CR360-`, `next_invoice_number` = `1001`).
+- **Transactional Repositories & Typed IPC:**
+  - `billingRepo.ts`: Atomic sale creation and cancellation transactions with stock movement synchronization and balance tracking.
+  - `handlers.ts`: Zod-validated IPC endpoints for `billing:createInvoice`, `billing:getInvoices`, `billing:getInvoiceById`, `billing:cancelInvoice`, `billing:getNextInvoiceNumber`, `billing:getShopSettings`, `customers:search`, and `customers:create`.
+  - `preload/index.ts`: Expose `window.api.billing` and `window.api.customers`.
+- **Automated Testing & Verification:**
+  - 21 new tests added (6 in `billingMath.test.ts`, 8 in `billingRepo.test.ts`, 2 in `validation.test.ts`, 5 in `PosBilling.test.tsx`).
+  - Total test suite expanded to 67 passing tests across 12 test files.
+  - Full TypeScript typecheck verified (`tsc --noEmit`).
+  - Production build completed (`npm run build`).
+  - Electron launch smoke test validated with migration 004 active.
+
+---
+
 ## [1.0.0-m3] - 2026-10-25
 ### Added - Milestone 3: Product Catalog & Inventory Management
 - **Complete Product Catalog Module (`ProductCatalog.tsx`):**

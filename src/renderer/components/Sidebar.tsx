@@ -55,7 +55,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems: NavItem[] = [
     // Menu (Core retail operations)
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} />, status: 'active', section: 'menu' },
-    { id: 'billing', label: 'POS Billing', icon: <Receipt size={18} />, badge: 'F2', status: 'planned', section: 'menu' },
+    { id: 'billing', label: 'POS Billing', icon: <Receipt size={18} />, badge: 'F2', status: 'active', section: 'menu' },
     { id: 'products', label: 'Products & Catalog', icon: <Package size={18} />, status: 'active', section: 'menu' },
     { id: 'inventory', label: 'Inventory & Stock', icon: <Boxes size={18} />, badge: lowStockCount > 0 ? `${lowStockCount}` : undefined, status: 'active', section: 'menu' },
     { id: 'purchases', label: 'Purchases', icon: <ShoppingCart size={18} />, status: 'planned', section: 'menu' },

@@ -46,6 +46,18 @@ const api: IpcApi = {
     createCategory: (name, code, description) => ipcRenderer.invoke('masters:createCategory', name, code, description),
     createBrand: (name, code) => ipcRenderer.invoke('masters:createBrand', name, code),
   },
+  billing: {
+    createInvoice: (data) => ipcRenderer.invoke('billing:createInvoice', data),
+    getInvoices: (filters) => ipcRenderer.invoke('billing:getInvoices', filters),
+    getInvoiceById: (id) => ipcRenderer.invoke('billing:getInvoiceById', id),
+    cancelInvoice: (invoiceId, reason) => ipcRenderer.invoke('billing:cancelInvoice', { invoiceId, reason }),
+    getNextInvoiceNumber: () => ipcRenderer.invoke('billing:getNextInvoiceNumber'),
+    getShopSettings: () => ipcRenderer.invoke('billing:getShopSettings'),
+  },
+  customers: {
+    search: (query) => ipcRenderer.invoke('customers:search', query),
+    create: (data) => ipcRenderer.invoke('customers:create', data),
+  },
 };
 
 // Expose the protected API to the renderer process

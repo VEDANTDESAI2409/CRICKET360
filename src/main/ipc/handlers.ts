@@ -8,12 +8,16 @@ import {
   UpdateProductInput,
   StockAdjustmentInput,
   ProductFilterQuery,
+  CreateInvoiceInput,
+  InvoiceFilterQuery,
+  CreateCustomerInput,
 } from '../../shared/types/models';
 import { IpcResult } from '../../shared/types/ipc';
 import * as productRepo from '../db/productRepo';
 import * as inventoryRepo from '../db/inventoryRepo';
 import * as mastersRepo from '../db/mastersRepo';
 import * as dashboardRepo from '../db/dashboardRepo';
+import { BillingRepo } from '../db/billingRepo';
 
 // Zod schemas for boundary validation
 const settingKeySchema = z.string().min(1).max(100).regex(/^[a-z0-9_]+$/i);
@@ -87,6 +91,47 @@ const stockAdjustmentSchema = z.object({
     'OTHER',
   ]),
   notes: z.string().max(1000).optional(),
+});
+
+const createInvoiceItemSchema = z.object({
+  product_id: z.number().int().positive(),
+  variant_id: z.number().int().positive().nullable().optional(),
+  quantity: z.number().int().positive(),
+  unit_price_paise: z.number().int().nonnegative(),
+  discount_amount_paise: z.number().int().nonnegative().optional(),
+});
+
+const paymentTenderSchema = z.object({
+  mode: z.enum(['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'CHEQUE']),
+  amount_paise: z.number().int().nonnegative(),
+  reference_number: z.string().max(100).optional(),
+});
+
+const createInvoiceSchema = z.object({
+  customer_id: z.number().int().positive().nullable().optional(),
+  customer_name: z.string().max(150).optional(),
+  customer_phone: z.string().max(30).optional(),
+  customer_gstin: z.string().max(20).optional(),
+  customer_address: z.string().max(300).optional(),
+  customer_state_code: z.string().max(10).optional(),
+  items: z.array(createInvoiceItemSchema).min(1),
+  discount_amount_paise: z.number().int().nonnegative().optional(),
+  payments: z.array(paymentTenderSchema),
+  notes: z.string().max(500).optional(),
+});
+
+const cancelInvoiceSchema = z.object({
+  invoiceId: z.number().int().positive(),
+  reason: z.string().min(2).max(300),
+});
+
+const createCustomerSchema = z.object({
+  name: z.string().min(2).max(150),
+  phone: z.string().max(30).optional(),
+  gstin: z.string().max(20).optional(),
+  address: z.string().max(300).optional(),
+  state_code: z.string().max(10).optional(),
+  credit_limit_paise: z.number().int().nonnegative().optional(),
 });
 
 export function registerIpcHandlers(): void {
@@ -411,4 +456,98 @@ export function registerIpcHandlers(): void {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   });
+
+  // 9. Billing & POS Handlers
+  ipcMain.handle('billing:createInvoice', async (_event, rawData: unknown) => {
+    try {
+      const validated = createInvoiceSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new BillingRepo(db);
+      const invoice = repo.createInvoice(validated as CreateInvoiceInput);
+      return { success: true, data: invoice };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('billing:getInvoices', async (_event, filters?: InvoiceFilterQuery) => {
+    try {
+      const db = getDatabase();
+      const repo = new BillingRepo(db);
+      const invoices = repo.getInvoices(filters);
+      return { success: true, data: invoices };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('billing:getInvoiceById', async (_event, id: number) => {
+    try {
+      const db = getDatabase();
+      const repo = new BillingRepo(db);
+      const invoice = repo.getInvoiceById(Number(id));
+      return { success: true, data: invoice };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('billing:cancelInvoice', async (_event, rawData: { invoiceId: number; reason: string }) => {
+    try {
+      const validated = cancelInvoiceSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new BillingRepo(db);
+      const cancelled = repo.cancelInvoice(validated.invoiceId, validated.reason);
+      return { success: true, data: cancelled };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('billing:getNextInvoiceNumber', async () => {
+    try {
+      const db = getDatabase();
+      const repo = new BillingRepo(db);
+      const nextNum = repo.getNextInvoiceNumber();
+      return { success: true, data: nextNum };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('billing:getShopSettings', async () => {
+    try {
+      const db = getDatabase();
+      const repo = new BillingRepo(db);
+      const settings = repo.getShopSettings();
+      return { success: true, data: settings };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // 10. Customer Handlers
+  ipcMain.handle('customers:search', async (_event, query?: string) => {
+    try {
+      const db = getDatabase();
+      const repo = new BillingRepo(db);
+      const customers = repo.getCustomers(query ? String(query) : undefined);
+      return { success: true, data: customers };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('customers:create', async (_event, rawData: unknown) => {
+    try {
+      const validated = createCustomerSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new BillingRepo(db);
+      const customer = repo.createCustomer(validated as CreateCustomerInput);
+      return { success: true, data: customer };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
 }
+

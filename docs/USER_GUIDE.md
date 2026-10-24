@@ -18,7 +18,7 @@ The sidebar is organized into functional sections:
 - **Dashboard:** At-a-glance shop performance, daily sales, active stock value, and low-stock alerts.
 - **Products & Catalog:** Master inventory list, product variants (size/color), MRP, selling prices, HSN codes, and barcode generation (Active - Milestone 3).
 - **Inventory & Stock:** Real-time stock audit, physical count reconciliation, and immutable movement ledger (Active - Milestone 3).
-- **POS Billing:** High-speed counter sales register with barcode scanning, instant discounts, multi-tender payments, and thermal/A4 printing (Planned Milestone 6).
+- **POS Billing:** High-speed counter sales register with barcode scanning, instant discounts, multi-tender payments, and thermal/A4 printing (Active - Milestone 4).
 - **Purchases:** Inward purchase bills from manufacturers/wholesalers, purchase tax tracking, and supplier returns (Planned Milestone 5).
 - **Customers (Khata):** Customer contact details, credit limits, outstanding balances, and payment receipts (Planned Milestone 7).
 - **Suppliers:** Supplier directory, purchase history, and payable balances (Planned Milestone 5).
@@ -128,4 +128,62 @@ The dashboard provides real-time visibility into inventory levels, sales revenue
 ### 6.2 Viewing the Immutable Movement Ledger
 1. Click the **Immutable Movement Ledger** tab in Inventory Management.
 2. View every stock change with timestamp, movement type (`OPENING_STOCK`, `PHYSICAL_ADJUSTMENT`, etc.), change quantity, and resulting balance.
+
+---
+
+## 7. Point-of-Sale (POS) Billing & GST Invoicing
+
+### 7.1 Fast Checkout Workflow
+1. Navigate to **POS Billing** using the left sidebar or the `F2` shortcut key.
+2. Focus the product search box using `F4` or click inside it.
+3. **Scan Barcode or Search:** Connect your USB barcode scanner and scan product barcodes, or type part of the product name, brand, or SKU.
+4. **Variant Selection:** If an item has multiple sizes/colors (e.g. cricket bat sizes SH, LH, Harrow), an interactive variant picker will automatically open allowing you to select the exact variant.
+5. **Managing Cart Items:**
+   - Adjust quantities using the `+` or `-` buttons or by typing a number directly into the quantity input.
+   - The register enforces stock validation: attempting to add more units than currently available in stock is automatically blocked.
+   - Remove an item from the cart by clicking the trash icon.
+
+### 7.2 Customer Selection & Inter-State GST
+1. By default, the register selects **Walk-in Customer** with intra-state GST (e.g. Maharashtra `27`), splitting taxes 50/50 as CGST and SGST.
+2. To bill a regular or out-of-state customer:
+   - Select the customer from the customer dropdown menu.
+   - If the customer belongs to a different state (e.g. Gujarat `24` or Delhi `07`), the tax engine immediately switches to **Inter-State GST (100% IGST)** with an informative badge.
+3. **Quick Add Customer:** Click the `+` user icon next to the customer dropdown to register a new customer on the fly without leaving the sales counter.
+
+### 7.3 Applying Discounts & Round-Off
+1. Enter an **Invoice Discount** in the checkout panel:
+   - Choose either a percentage (`%`) or fixed Rupee amount (`₹`).
+   - The discount is proportionally distributed across items and deducted from taxable values before tax calculation.
+2. **Nearest Rupee Round-Off:** The system automatically calculates the round-off adjustment paise to ensure the final payable amount is an exact whole Rupee.
+
+### 7.4 Multi-Tender & Split Payments
+1. Choose the payment mode:
+   - **Cash:** Click quick denomination buttons (e.g. `₹ 500`, `₹ 1000`, `₹ 2000`) or enter cash received. The register calculates and displays the exact change due to the customer.
+   - **UPI:** Generates a real-time dynamic UPI payment prompt and displays the shop's UPI ID / QR code for instant mobile app scanning. Enter the UTR / transaction reference.
+   - **Card:** Enter the card authorization or swipe transaction code.
+   - **Split Payment:** Click "Split Payment" to divide the bill across multiple tender methods (e.g., ₹1,000 Cash + ₹1,500 UPI). The register verifies that total tenders match the bill amount before allowing completion.
+
+### 7.5 Generating, Printing & Previewing Invoices
+1. Click **Complete & Generate Bill** or press `F10`.
+2. A printable **GST Tax Invoice Modal** opens automatically with:
+   - Unique sequential invoice number (e.g. `CR360-1001`).
+   - Shop details, GSTIN, address, and contact numbers.
+   - Customer name, phone, GSTIN, and Place of Supply.
+   - Itemized table with HSN codes, quantities, rates, and tax breakdown.
+   - Formal GST tax summary table (CGST, SGST, IGST per tax bracket).
+   - Total amount in words (Indian numbering format).
+   - Standard terms and conditions and cashier signature area.
+3. **Print Options:**
+   - Switch between **A4 Tax Invoice** format and **80mm Thermal Receipt** preview.
+   - Click **Print Invoice** to send directly to your connected Windows system or thermal receipt printer.
+
+### 7.6 Sales History & Audit-Safe Cancellation
+1. Switch to the **Sales History** tab in the POS Billing header.
+2. View historical invoices with filters for date range and completion status (`COMPLETED` or `CANCELLED`).
+3. Click **View / Print** on any past invoice to reopen its full printable modal.
+4. **Void / Cancel Invoice:**
+   - Click **Void / Cancel** on any completed invoice.
+   - Enter a mandatory cancellation reason in the confirmation dialog.
+   - The invoice status is marked as `CANCELLED`.
+   - **Automatic Stock Restitution:** The system automatically restores stock for all items on the cancelled invoice (updating variant stock and rolling up parent product totals) and records compensatory `SALE_RETURN` audit movements in the inventory ledger.
 

@@ -235,6 +235,13 @@ Migrations are version-controlled `.sql` files stored under `src/main/db/migrati
    - Creates the `hsn_codes` registry table with standard sports GST classifications (e.g. `9506` for sports equipment @ 12%, `6404` for footwear @ 18%, `6109` for sports apparel @ 12%, `6506` for protective helmets @ 18%).
    - Creates `stock_adjustments` table with auto-generated adjustment numbers (`ADJ-YYYYMMDD-XXXX`), old vs new quantities, variance, reason codes, and audit notes.
    - Adds performance indices: `idx_products_active_stock`, `idx_products_cat_brand`, `idx_stock_mov_prod_created`, and `idx_stock_adj_prod`.
+4. `004_pos_and_gst_billing.sql` (Milestone 4):
+   - Adds `cancellation_reason`, `cancelled_at`, and `notes` columns to `sales_invoices`.
+   - Creates `sales_invoice_items` table with historical snapshots of product name, variant name, HSN code, unit name, rate, and tax breakdowns.
+   - Creates `payments` table supporting Cash, UPI, Card, and split payments.
+   - Seeds additional customer records including inter-state customers in Gujarat (`24`) and Delhi (`07`).
+   - Configures `invoice_prefix` (`CR360-`) and `next_invoice_number` (`1001`) in `app_settings`.
+   - Adds performance indices: `idx_sales_inv_number`, `idx_sales_inv_date`, `idx_sales_inv_status`, `idx_sales_items_inv`, `idx_payments_inv`, and `idx_cust_search`.
 
 A dedicated migration tracking table `_schema_migrations` tracks installed migrations:
 ```sql
