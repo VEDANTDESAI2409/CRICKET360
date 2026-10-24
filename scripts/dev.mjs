@@ -3,6 +3,7 @@ import { spawn } from 'child_process';
 import * as esbuild from 'esbuild';
 import fs from 'fs';
 import path from 'path';
+import electron from 'electron';
 
 async function startDev() {
   console.log('Starting Cricket360 Development Environment...');
@@ -53,28 +54,56 @@ async function startDev() {
   const devServerUrl = `http://localhost:${port}`;
   console.log(`Vite Dev Server running at: ${devServerUrl}`);
 
-  // 3. Resolve electron executable
-  const electronPkgPath = path.resolve('node_modules/electron/dist/electron.exe');
-  const electronCmd = fs.existsSync(electronPkgPath) ? electronPkgPath : 'electron';
+  // 3. Resolve electron executable without shell concatenation issues
+  const electronCmd =
+    (typeof electron === 'string' && fs.existsSync(electron) && electron) ||
+    (fs.existsSync(path.resolve('node_modules/electron/dist/electron.exe')) &&
+      path.resolve('node_modules/electron/dist/electron.exe')) ||
+    'electron';
 
   console.log('Spawning Electron process...');
-  const electronProcess = spawn(electronCmd, ['.'], {
+  const electronArgs = ['.', ...process.argv.slice(2)];
+  const electronProcess = spawn(electronCmd, electronArgs, {
+    cwd: path.resolve('.'),
     stdio: 'inherit',
     env: {
       ...process.env,
       VITE_DEV_SERVER_URL: devServerUrl,
     },
-    shell: true,
+    shell: false,
   });
 
-  electronProcess.on('close', async () => {
-    console.log('Electron closed. Stopping Vite dev server...');
-    await viteServer.close();
-    process.exit(0);
+  let isCleanedUp = false;
+  const cleanup = async (code = 0) => {
+    if (isCleanedUp) return;
+    isCleanedUp = true;
+    try {
+      if (electronProcess && !electronProcess.killed) {
+        electronProcess.kill();
+      }
+    } catch {}
+    try {
+      await viteServer.close();
+    } catch {}
+    process.exit(code);
+  };
+
+  electronProcess.on('error', async (err) => {
+    console.error('Failed to spawn Electron process:', err);
+    await cleanup(1);
   });
+
+  electronProcess.on('close', async (code) => {
+    console.log(`Electron closed (exit code: ${code ?? 0}). Stopping Vite dev server...`);
+    await cleanup(code ?? 0);
+  });
+
+  process.on('SIGINT', () => cleanup(0));
+  process.on('SIGTERM', () => cleanup(0));
 }
 
 startDev().catch((err) => {
   console.error('Failed to start dev environment:', err);
   process.exit(1);
 });
+
