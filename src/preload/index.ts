@@ -14,6 +14,12 @@ const api: IpcApi = {
   db: {
     getStats: () => ipcRenderer.invoke('db:getStats'),
   },
+  dashboard: {
+    getMetrics: () => ipcRenderer.invoke('dashboard:getMetrics'),
+    getLowStockAlerts: () => ipcRenderer.invoke('dashboard:getLowStockAlerts'),
+    getRecentTransactions: () => ipcRenderer.invoke('dashboard:getRecentTransactions'),
+    getWeeklySalesSummary: () => ipcRenderer.invoke('dashboard:getWeeklySalesSummary'),
+  },
 };
 
 // Expose the protected API to the renderer process

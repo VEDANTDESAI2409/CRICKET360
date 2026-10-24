@@ -95,3 +95,48 @@ export interface HealthCheckResult {
   integrity: string;
   timestamp: string;
 }
+
+export interface DashboardMetrics {
+  totalActiveProducts: number;
+  totalCategories: number;
+  totalBrands: number;
+  totalStockQuantity: number;
+  totalStockValuationPaise: number;
+  todaySalesPaise: number;
+  todayPurchasesPaise: number;
+  lowStockCount: number;
+  outOfStockCount: number;
+  inStockCount: number;
+}
+
+export interface LowStockAlertItem {
+  id: number;
+  name: string;
+  sku: string;
+  categoryName: string;
+  brandName: string;
+  stockQuantity: number;
+  minStockLevel: number;
+  reorderLevel: number;
+  status: 'OUT_OF_STOCK' | 'LOW_STOCK' | 'IN_STOCK';
+  mrpPaise: number;
+  sellingPricePaise: number;
+}
+
+export interface RecentTransactionItem {
+  id: number;
+  referenceNumber: string;
+  partyName: string;
+  transactionDate: string;
+  totalAmountPaise: number;
+  status: string;
+  type: 'SALE' | 'PURCHASE';
+}
+
+export interface DaySalesSummary {
+  dayName: string; // "Sun", "Mon", "Tue", etc.
+  date: string; // YYYY-MM-DD
+  salesAmountPaise: number;
+  invoiceCount: number;
+}
+

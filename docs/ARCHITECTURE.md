@@ -84,17 +84,21 @@ The renderer runs a modern React single-page application bundled with Vite. It h
 ## 4. IPC API Contract Overview
 
 The IPC layer is organized into modular channels:
-- `db:dashboard:getStats` - Computes live KPI metrics.
-- `db:products:*` - Product catalog, variants, barcodes, pricing.
-- `db:inventory:*` - Stock queries, adjustments, movement logs, valuation.
-- `db:billing:*` - POS invoice creation, payment recording, cancellation.
-- `db:purchases:*` - Purchase bill entry, supplier returns.
-- `db:parties:*` - Customers, suppliers, ledgers, credit balances.
-- `db:reports:*` - GST summaries, sales reports, inventory valuations.
-- `db:expenses:*` - Shop expenses and category tracking.
-- `system:print:*` - Silent printing to thermal or default printer, A4 print preview.
-- `system:backup:*` - Manual backup generation, database restore, integrity checks.
-- `system:settings:*` - Shop configuration, GSTIN, tax defaults, print profiles.
+- `dashboard:getMetrics` - Aggregate KPI metrics (products, categories, stock, today's sales/purchases, stock distribution).
+- `dashboard:getLowStockAlerts` - Reorder threshold alerts table items.
+- `dashboard:getRecentTransactions` - Recent sales invoices & purchases feed.
+- `dashboard:getWeeklySalesSummary` - 7-day rolling sales activity series for chart visualization.
+- `app:getInfo` / `app:getHealthCheck` - Application environment, packaging state, database integrity.
+- `settings:getAll` / `settings:get` / `settings:set` - Key-value persistent configuration store.
+- `db:getStats` - Database entity counts and migration status.
+- `db:products:*` - Product catalog, variants, barcodes, pricing (Milestone 3).
+- `db:inventory:*` - Stock queries, adjustments, movement logs, valuation (Milestone 3 / 4).
+- `db:billing:*` - POS invoice creation, payment recording, cancellation (Milestone 6).
+- `db:purchases:*` - Purchase bill entry, supplier returns (Milestone 5).
+- `db:parties:*` - Customers, suppliers, ledgers, credit balances (Milestone 5 / 7).
+- `db:reports:*` - GST summaries, sales reports, inventory valuations (Milestone 8).
+- `system:print:*` - Silent printing to thermal or default printer, A4 print preview (Milestone 6).
+- `system:backup:*` - Manual backup generation, database restore, integrity checks (Milestone 9).
 
 ---
 

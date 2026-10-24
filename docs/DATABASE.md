@@ -225,11 +225,11 @@ PRAGMA temp_store = MEMORY;        -- Use memory for temporary tables & sorts
 
 ---
 
-## 4. Migration Architecture
+## 4. Migration Architecture & Applied History
 
-Migrations are version-controlled `.sql` or TypeScript files stored under `src/main/db/migrations/`:
-- `001_initial_schema.sql`
-- `002_seed_initial_masters.sql`
+Migrations are version-controlled `.sql` files stored under `src/main/db/migrations/`:
+1. `001_initial_schema.sql` (Milestone 1): Base schema with categories, brands, units, customers, suppliers, settings, and users.
+2. `002_transactions_foundation.sql` (Milestone 2): Adds `stock_quantity` columns to `products` and `product_variants`, creates `sales_invoices`, `purchases`, `stock_movements`, and seeds initial cricket catalog items.
 
 A dedicated migration tracking table `_schema_migrations` tracks installed migrations:
 ```sql
@@ -242,7 +242,23 @@ At startup, the migration runner reads all pending migration files sequentially 
 
 ---
 
-## 5. Backup & Recovery Strategy
+## 5. Dashboard Queries & Aggregate Calculation Rules
+
+The dashboard computes all metrics directly from SQLite using parameterized statements:
+- **Active Products:** `SELECT COUNT(*) FROM products WHERE is_active = 1`
+- **Total Stock Quantity:** `SELECT COALESCE(SUM(stock_quantity), 0) FROM products WHERE is_active = 1`
+- **Total Stock Valuation:** `SELECT COALESCE(SUM(stock_quantity * purchase_cost_paise), 0) FROM products WHERE is_active = 1` (in integer paise)
+- **Today's Sales Revenue:** `SELECT COALESCE(SUM(grand_total_paise), 0) FROM sales_invoices WHERE invoice_date = ? AND status = 'COMPLETED'` (cancelled and returned invoices are excluded)
+- **Today's Purchases:** `SELECT COALESCE(SUM(grand_total_paise), 0) FROM purchases WHERE purchase_date = ? AND status = 'RECEIVED'`
+- **Stock Distribution:**
+  - Out of stock: `stock_quantity = 0`
+  - Low stock: `stock_quantity > 0 AND stock_quantity <= min_stock_level`
+  - In stock: `stock_quantity > min_stock_level`
+- **Rolling 7-Day Activity:** Sums completed sales per date from `T - 6` to `T`.
+
+---
+
+## 6. Backup & Recovery Strategy
 
 1. **Location:** Default database path is inside the OS AppData folder:
    `%APPDATA%\Cricket360\database\cricket360.sqlite`

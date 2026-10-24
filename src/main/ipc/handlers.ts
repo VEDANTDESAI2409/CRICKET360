@@ -89,4 +89,45 @@ export function registerIpcHandlers(): void {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   });
+
+  // 5. Dashboard Handlers
+  ipcMain.handle('dashboard:getMetrics', async () => {
+    try {
+      const db = getDatabase();
+      const metrics = (await import('../db/dashboardRepo')).getDashboardMetrics(db);
+      return { success: true, data: metrics };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('dashboard:getLowStockAlerts', async () => {
+    try {
+      const db = getDatabase();
+      const alerts = (await import('../db/dashboardRepo')).getLowStockAlerts(db);
+      return { success: true, data: alerts };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('dashboard:getRecentTransactions', async () => {
+    try {
+      const db = getDatabase();
+      const transactions = (await import('../db/dashboardRepo')).getRecentTransactions(db);
+      return { success: true, data: transactions };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('dashboard:getWeeklySalesSummary', async () => {
+    try {
+      const db = getDatabase();
+      const summary = (await import('../db/dashboardRepo')).getWeeklySalesSummary(db);
+      return { success: true, data: summary };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
 }

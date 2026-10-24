@@ -10,24 +10,24 @@ The system is tailored specifically for sports retail and wholesale businesses h
 ## 2. Requirements Traceability Checklist
 
 ### Status Summary:
-- **Implemented:** 1 (REQ-R01 Offline Operation & SQLite Persistent Storage)
-- **Partially Implemented:** 1 (REQ-O01 App Settings Key-Value Store)
-- **Missing (To be implemented in Milestones 2-10):** 29
+- **Implemented:** 5 (REQ-R01 Offline SQLite Storage, REQ-A01 Dashboard KPI Metrics, REQ-A02 Dashboard Recent Activity, REQ-A03 Dashboard Quick Actions, REQ-D03 Low Stock & Out of Stock Alerts)
+- **Partially Implemented:** 2 (REQ-O01 App Settings Store, REQ-C01 Smart Search Entry Point)
+- **Missing (To be implemented in Milestones 3-10):** 25
 - **Blocked / Deferred:** 4 (Multi-Store Cloud Sync, Mobile Companion App, Direct NIC e-Invoice API, Automated WhatsApp Gateway)
 
 | Req ID | Module / Feature | Specification Details | Status | Planned Milestone | Database Tables / Entities | Target Verification Method |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **REQ-A01** | Dashboard KPI Metrics | Total products, stock count, today's sales, purchases, low-stock count, gross estimates. Derived directly from DB. | Missing | Milestone 2 | `sales_invoices`, `purchases`, `products`, `product_variants`, `stock_movements` | Automated query tests & component rendering |
-| **REQ-A02** | Dashboard Recent Activity | Recent sales list, recent purchases, stock alerts feed. | Missing | Milestone 2 | `sales_invoices`, `purchases`, `products` | Component integration tests |
-| **REQ-A03** | Dashboard Quick Actions | Shortcuts to New Bill (POS), Add Product, Add Purchase, Run Daily Report. | Missing | Milestone 2 | N/A (UI Routing) | Route transition & shortcut tests |
+| **REQ-A01** | Dashboard KPI Metrics | Total products, stock count, today's sales, purchases, low-stock count, gross estimates. Derived directly from DB. | Implemented | Milestone 2 | `sales_invoices`, `purchases`, `products`, `product_variants`, `stock_movements` | Automated query tests & component rendering |
+| **REQ-A02** | Dashboard Recent Activity | Recent sales list, recent purchases, stock alerts feed. | Implemented | Milestone 2 | `sales_invoices`, `purchases`, `products` | Component integration tests |
+| **REQ-A03** | Dashboard Quick Actions | Shortcuts to New Bill (POS), Add Product, Add Purchase, Run Daily Report. | Implemented | Milestone 2 | N/A (UI Routing) | Route transition & shortcut tests |
 | **REQ-B01** | Product Catalog Core | Product Name, SKU, Barcode, Brand, Sport, Category, Subcategory, Unit, HSN, Tax rate. | Missing | Milestone 3 | `products`, `brands`, `categories`, `sports`, `units` | Schema constraints & CRUD unit tests |
 | **REQ-B02** | Product Pricing Structure | Purchase cost, Cost Price, Selling Price, MRP, product-level discount, min-price warning. Stored in integer paise. | Missing | Milestone 3 | `products`, `product_variants` | Precision calculation tests |
 | **REQ-B03** | Product Variants | Size (e.g. Harrow, Full Size, SH, LH, 6, 7, 8, 9, 10, 11), Color, Specification, variant SKU/barcode, variant stock. | Missing | Milestone 3 | `product_variants` | Variant creation & stock isolation tests |
 | **REQ-B04** | Product Lifecycle | Activation, deactivation, safe deletion (prevented if historical invoices or stock records exist). | Missing | Milestone 3 | `products` (`is_active` flag, foreign key checks) | Safe deletion integrity tests |
-| **REQ-C01** | Smart Search & Barcode Lookup | Instant search by Name, SKU, Barcode, Brand, Sport, Size, Color. Keyboard-driven barcode scanning. | Missing | Milestone 3 | `products`, `product_variants` (indexed) | Search filter & barcode scanner event tests |
+| **REQ-C01** | Smart Search & Barcode Lookup | Instant search by Name, SKU, Barcode, Brand, Sport, Size, Color. Keyboard-driven barcode scanning. | Partially Implemented | Milestone 3 | `products`, `product_variants` (indexed) | Search filter & barcode scanner event tests |
 | **REQ-D01** | Inventory Tracking & Audit | Real-time stock counts computed and verified via auditable stock movements. | Missing | Milestone 4 | `stock_movements` | Transactional balance verification tests |
 | **REQ-D02** | Stock Adjustments & Reconciliation | Physical audit adjustments with mandatory reason codes, notes, user ID, and timestamps. | Missing | Milestone 4 | `stock_adjustments`, `stock_movements` | Stock adjustment workflow tests |
-| **REQ-D03** | Low Stock & Out of Stock Alerts | Threshold alerts based on product/variant `min_stock_level` and `reorder_level`. | Missing | Milestone 4 | `products`, `product_variants` | Query & UI alert tests |
+| **REQ-D03** | Low Stock & Out of Stock Alerts | Threshold alerts based on product/variant `min_stock_level` and `reorder_level`. | Implemented | Milestone 2 / 4 | `products`, `product_variants` | Query & UI alert tests |
 | **REQ-D04** | Stock Valuation | Real-time stock valuation using FIFO / Cost Price / Weighted Average methods. | Missing | Milestone 4 | `products`, `stock_movements` | Valuation calculation tests |
 | **REQ-D05** | Negative Stock Prevention | Hard lock against negative stock during billing by default, with explicit override flag if permitted. | Missing | Milestone 4 | `products`, `product_variants`, `sales_invoices` | Concurrency & stock validation tests |
 | **REQ-E01** | POS Billing Register | High-speed keyboard-friendly billing interface, item addition by scan/search, quantity increments. | Missing | Milestone 6 | `sales_invoices`, `invoice_items` | UI POS workflow simulation |

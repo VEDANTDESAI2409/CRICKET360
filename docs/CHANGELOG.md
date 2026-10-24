@@ -4,6 +4,31 @@ All notable changes to the Cricket360 project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-m2] - 2026-10-25
+### Added - Milestone 2: Main Interface, Dashboard & Retail Design System
+- **Forest Green & White Retail Design System:** Fully refined application theme matching the reference layout using strict tokens (`#124B36` Dark Green, `#167A53` Primary Green, `#EAF5EF` Surface Green, `#F3F5F4` App Background, `#FFFFFF` White Cards, `#18231D` Primary Text, `#7A8580` Muted Text).
+- **Persistent Left Navigation Sidebar:** Redesigned compact sidebar with distinct active green indicator pill, "Menu" and "General" sections, planned module tags, live low-stock badge, and offline SQLite status card.
+- **Top Application Header:** Implemented search input with shortcut badge (`F4`), quick POS action button (`F2`), dynamic notification bell displaying real-time low-stock alert count, and cashier profile area.
+- **Functional Store Dashboard:**
+  - **4 Top Summary Metric Cards:** Total Active Products (featured green gradient), Product Categories & Brands, Total Stock Units & Valuation, and Low-Stock Alerts.
+  - **Secondary Financial & Operations Strip:** Real-time Today's Sales Revenue (completed invoices only), Today's Purchases, and Stock Valuation in paise.
+  - **Weekly Sales Activity Pill Bar Chart:** Proportional vertical pill bars with hover tooltips displaying date, sales amount, invoice count, and today indicator.
+  - **Stock Health Donut Progress Meter:** Semicircular SVG gauge rendering In Stock %, Low Stock %, and Out of Stock % fulfillment ratios.
+  - **POS Shift & Retail Shortcuts:** Active Terminal 01 shift indicator with quick entry points to POS Billing, Add Product, Search Inventory, and GST Reports.
+  - **Low-Stock Inventory Alerts Table:** Parameterized table listing items at or below reorder threshold with SKU, category, brand, quantity, threshold, status badge (`LOW STOCK` / `OUT OF STOCK`), and reorder actions.
+  - **Recent Transactions Feed:** Honest empty state indicating where sales invoices and supplier bills will appear once recorded.
+- **Reusable UI Foundation:**
+  - `<MetricCard>`: Supports featured gradient and standard card variants.
+  - `<Table>`: Generic composable data table with column definitions, sorting toggles (`asc` / `desc`), loading skeletons, and empty states.
+  - `<SearchInput>`: Controlled, debounced search with clear action and keyboard badge.
+  - `<BarChart>` & `<ProgressDonut>`: Dynamic SVG visualization primitives.
+- **Database & IPC Extension:**
+  - Migration `002_transactions_foundation.sql`: Added `stock_quantity` columns to `products` and `product_variants`, created `sales_invoices`, `purchases`, and `stock_movements` tables, and seeded initial cricket equipment.
+  - Typed IPC methods: `dashboard:getMetrics`, `dashboard:getLowStockAlerts`, `dashboard:getRecentTransactions`, `dashboard:getWeeklySalesSummary`.
+  - Parameterized repository queries in `src/main/db/dashboardRepo.ts` with strict cancellation exclusion and local date boundary handling.
+- **Global Keyboard Shortcuts:** `F1` (Dashboard), `F2` (Billing), `F4` (Search), with safeguards preventing interception during active form inputs.
+- **Automated Testing:** 11 new tests added covering repository calculations, cancellation exclusions, UI rendering, table sorting, and filtering (total test suite: 26 passing tests).
+
 ---
 
 ## [1.0.0-m1] - 2026-10-25

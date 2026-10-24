@@ -1,4 +1,13 @@
-import { AppInfo, AppSetting, DatabaseStats, HealthCheckResult } from './models';
+import {
+  AppInfo,
+  AppSetting,
+  DatabaseStats,
+  HealthCheckResult,
+  DashboardMetrics,
+  LowStockAlertItem,
+  RecentTransactionItem,
+  DaySalesSummary,
+} from './models';
 
 export type IpcResult<T> = 
   | { success: true; data: T }
@@ -16,6 +25,12 @@ export interface IpcApi {
   };
   db: {
     getStats: () => Promise<IpcResult<DatabaseStats>>;
+  };
+  dashboard: {
+    getMetrics: () => Promise<IpcResult<DashboardMetrics>>;
+    getLowStockAlerts: () => Promise<IpcResult<LowStockAlertItem[]>>;
+    getRecentTransactions: () => Promise<IpcResult<RecentTransactionItem[]>>;
+    getWeeklySalesSummary: () => Promise<IpcResult<DaySalesSummary[]>>;
   };
 }
 

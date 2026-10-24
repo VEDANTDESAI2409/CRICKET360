@@ -10,31 +10,39 @@ In a retail financial management system, bugs can cause stock discrepancies, tax
 
 ---
 
-## 2. Test Suites Structure
+## 2. Test Suites Structure & Active Coverage
+
+The test suite runs under Vitest using in-memory SQLite and React Testing Library:
 
 ```
 tests/
 ├── unit/
-│   ├── math/
-│   │   ├── taxCalculations.test.ts     # CGST/SGST/IGST intra vs inter state
-│   │   ├── currency.test.ts            # Paise conversion, formatting, rounding
-│   │   └── discounts.test.ts           # Item & invoice level discount distribution
-│   └── validation/
-│       ├── productSchema.test.ts       # Zod schemas for products & variants
-│       └── invoiceSchema.test.ts       # Zod schemas for invoices & payments
-├── integration/
 │   ├── db/
-│   │   ├── migrations.test.ts          # Schema migrations run and rollback
-│   │   ├── billingTransaction.test.ts  # Atomic sale invoice + stock reduction
-│   │   ├── purchaseTransaction.test.ts # Inward purchase + stock addition
-│   │   └── negativeStockLock.test.ts   # Guard against selling out-of-stock items
-│   └── backup/
-│       └── backupRestore.test.ts       # SQLite backup creation & restoration
+│   │   ├── sqlite-foundation.test.ts   # 6 tests: WAL mode, foreign keys, atomic migration rollback
+│   │   └── dashboardRepo.test.ts       # 6 tests: Aggregate queries, cancellations exclusion, date boundaries
+│   └── ipc/
+│       └── validation.test.ts          # 3 tests: Zod IPC boundary validation for settings
 └── components/
-    ├── PosRegister.test.tsx            # POS barcode scan, line item addition
-    ├── ProductModal.test.tsx           # Product creation form validation
-    └── StockAdjustment.test.tsx        # Adjustment modal & reason requirement
+    ├── UiShell.test.tsx                # 6 tests: Button, Card, Badge, Sidebar, Header
+    └── Dashboard.test.tsx              # 5 tests: MetricCard, SearchInput, Table sorting/empty, BarChart, ProgressDonut
 ```
+
+**Total Active Test Count:** 26 automated tests passing with zero regressions.
+
+### Key Milestone 2 Test Cases:
+- **`dashboardRepo.test.ts`:**
+  - Calculates active products, categories, stock units, and valuation against isolated SQLite fixtures.
+  - Verifies completed invoices are aggregated while `CANCELLED` invoices are strictly excluded.
+  - Verifies date boundaries (yesterday's invoices are excluded from today's sales).
+  - Verifies low-stock and out-of-stock threshold classification.
+  - Verifies rolling 7-day sales time series generation.
+- **`Dashboard.test.tsx`:**
+  - MetricCard featured and standard variant rendering.
+  - SearchInput keyboard badge (`F4`), clear button action, and controlled change.
+  - Table sorting toggles (`asc` / `desc`), loading skeletons, and empty state rendering.
+  - BarChart pill heights and ProgressDonut SVG gauge arc calculations.
+  - Low-stock inventory table searching and filter matching.
+  - Quick POS action button navigation (`+ New Bill (F2)`).
 
 ---
 
