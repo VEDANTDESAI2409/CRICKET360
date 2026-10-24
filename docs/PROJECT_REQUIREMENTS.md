@@ -10,9 +10,9 @@ The system is tailored specifically for sports retail and wholesale businesses h
 ## 2. Requirements Traceability Checklist
 
 ### Status Summary:
-- **Implemented:** 0
-- **Partially Implemented:** 0
-- **Missing (Not yet implemented):** 31
+- **Implemented:** 1 (REQ-R01 Offline Operation & SQLite Persistent Storage)
+- **Partially Implemented:** 1 (REQ-O01 App Settings Key-Value Store)
+- **Missing (To be implemented in Milestones 2-10):** 29
 - **Blocked / Deferred:** 4 (Multi-Store Cloud Sync, Mobile Companion App, Direct NIC e-Invoice API, Automated WhatsApp Gateway)
 
 | Req ID | Module / Feature | Specification Details | Status | Planned Milestone | Database Tables / Entities | Target Verification Method |
@@ -52,10 +52,10 @@ The system is tailored specifically for sports retail and wholesale businesses h
 | **REQ-M01** | User Authentication & RBAC | Local Admin vs Cashier/Staff roles, password hashing with PBKDF2/bcrypt, permission guards for discounts/cancellations. | Missing | Milestone 9 | `users`, `roles`, `permissions` | Auth & role permission tests |
 | **REQ-M02** | Audit Trail Log | Immutable audit log of all sensitive operations (void invoices, price changes, stock adjustments). | Missing | Milestone 9 | `audit_logs` | Audit log generation tests |
 | **REQ-N01** | Invoice Printing Engine | Dual layout engine: A4 (GST Tax Invoice) and Thermal 80mm/58mm slip with custom header, logo, QR, and footer terms. | Missing | Milestone 6 | Print window template renderer | Print styling & IPC print trigger tests |
-| **REQ-O01** | Shop Profile & Settings | Shop name, address, phone, GSTIN, State code, logo, bank details, thermal printer name, invoice notes. | Missing | Milestone 1 | `app_settings` | Settings persistence tests |
+| **REQ-O01** | Shop Profile & Settings | Shop name, address, phone, GSTIN, State code, logo, bank details, thermal printer name, invoice notes. | Partially Implemented | Milestone 1 (Foundation active) | `app_settings` | Settings persistence tests |
 | **REQ-P01** | Barcode Label Generation | Print barcode labels with shop name, product name, size, MRP, sale price, barcode. | Missing | Milestone 3 | SVG/Canvas barcode renderer | Barcode generation tests |
 | **REQ-Q01** | Bulk Pricing & Margin Tools | Bulk price updater by percentage/brand, minimum price floor check to prevent loss. | Missing | Milestone 3 | Bulk update transaction | Pricing policy guard tests |
-| **REQ-R01** | Offline Operation & Local Storage | 100% offline capability with persistent SQLite stored in OS user data directory. | Missing | Milestone 1 | SQLite engine | Network disconnection test |
+| **REQ-R01** | Offline Operation & Local Storage | 100% offline capability with persistent SQLite stored in OS user data directory. | Implemented | Milestone 1 | SQLite engine | Network disconnection test |
 
 ---
 

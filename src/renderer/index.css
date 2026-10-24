@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-brand-dark: #124B36;
+  --color-brand-primary: #167A53;
+  --color-brand-light: #EAF5EF;
+  --color-retail-bg: #F3F5F4;
+  --color-retail-card: #FFFFFF;
+  --color-retail-text: #18231D;
+  --color-retail-muted: #7A8580;
+  --color-retail-border: #E3E9E5;
+  --color-retail-error: #C83E4D;
+  --color-retail-warning: #D69A28;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  background-color: var(--color-retail-bg);
+  color: var(--color-retail-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom retail scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Windows desktop window drag region helper if titlebar hidden */
+.titlebar-drag-region {
+  -webkit-app-region: drag;
+}
+
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
