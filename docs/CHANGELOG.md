@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.0-m4] - 2026-10-25
+### Fixed - Optional Customer Details & IPC Validation
+- **Customer GSTIN & Address Nullability:** Resolved IPC validation errors (`customer_gstin: expected string, received null`, `customer_address: expected string, received null`) when billing walk-in customers or customers without registered GST/address.
+- **IPC Schema Normalization:** Created centralized `schemas.ts` using `.nullable().optional()` for optional customer details, notes, and payment references, while preserving strict validation for mandatory items and financial fields.
+- **Repository Snapshot Normalization:** Added `normalizeOptionalString()` in `billingRepo.ts` to ensure consistent handling of whitespace, empty strings, and null snapshots.
+- **Windows File Lock Handling in Test Runner:** Updated `switch-bindings.mjs` and `tests/setup.ts` to gracefully handle concurrent Electron instances during tests without `EBUSY` DLL copy locks.
+
 ### Added - Milestone 4: POS & GST Billing
 - **Point-of-Sale Billing Register (`PosBilling.tsx`):**
   - High-speed retail billing interface with instant product search by name, SKU, or barcode.

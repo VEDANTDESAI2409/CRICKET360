@@ -237,4 +237,56 @@ describe('Milestone 4: BillingRepo & POS Transaction Integrity', () => {
 
     expect(() => repo.cancelInvoice(invoice.id, 'Duplicate cancellation')).toThrow(/already CANCELLED/);
   });
+
+  it('9. should create invoice for walk-in customer with null customer_gstin and customer_address and persist null snapshots', () => {
+    const invoice = repo.createInvoice({
+      customer_id: 1,
+      customer_name: 'Walk-in Customer',
+      customer_phone: null,
+      customer_gstin: null,
+      customer_address: null,
+      customer_state_code: '27',
+      items: [{ product_id: 1, quantity: 1, unit_price_paise: 112000 }],
+      payments: [{ mode: 'CASH', amount_paise: 112000, reference_number: null }],
+      notes: null,
+    });
+
+    expect(invoice.id).toBeDefined();
+    expect(invoice.customer_name_snapshot).toBe('Walk-in Customer');
+    expect(invoice.customer_gstin_snapshot).toBeNull();
+    expect(invoice.customer_address_snapshot).toBeNull();
+
+    // Verify raw database row directly
+    const row = db.prepare('SELECT * FROM sales_invoices WHERE id = ?').get(invoice.id) as any;
+    expect(row.customer_gstin_snapshot).toBeNull();
+    expect(row.customer_address_snapshot).toBeNull();
+  });
+
+  it('10. should create invoice for registered customer and preserve gstin and address snapshots on sales_invoices', () => {
+    // Customer 3 is seeded as Gujarat Lions in 004_pos_and_gst_billing.sql
+    const invoice = repo.createInvoice({
+      customer_id: 3,
+      customer_name: 'Gujarat Lions (Inter-State)',
+      customer_phone: '+91 97123 45678',
+      customer_gstin: '24AAACG1234P1Z8',
+      customer_address: 'Stadium Road, Ahmedabad, Gujarat',
+      customer_state_code: '24',
+      items: [{ product_id: 1, quantity: 1, unit_price_paise: 112000 }],
+      payments: [{ mode: 'UPI', amount_paise: 112000, reference_number: 'UPI-REF-001' }],
+      notes: 'State tournament order',
+    });
+
+    expect(invoice.id).toBeDefined();
+    expect(invoice.customer_name_snapshot).toBe('Gujarat Lions (Inter-State)');
+    expect(invoice.customer_gstin_snapshot).toBe('24AAACG1234P1Z8');
+    expect(invoice.customer_address_snapshot).toBe('Stadium Road, Ahmedabad, Gujarat');
+    expect(invoice.is_inter_state).toBe(1);
+
+    // Verify raw database row directly
+    const row = db.prepare('SELECT * FROM sales_invoices WHERE id = ?').get(invoice.id) as any;
+    expect(row.customer_gstin_snapshot).toBe('24AAACG1234P1Z8');
+    expect(row.customer_address_snapshot).toBe('Stadium Road, Ahmedabad, Gujarat');
+    expect(row.is_inter_state).toBe(1);
+  });
 });
+

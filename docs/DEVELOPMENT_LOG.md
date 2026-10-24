@@ -1,5 +1,28 @@
 # Cricket360: Development Work Log
 
+## Log Entry: 2026-10-25 - Fix: Handle Optional Customer Details in POS Billing
+
+### Summary of Root Cause & Fix
+- **Root Cause:**
+  - SQLite `customers` table stores `NULL` for `gstin` and `address` when not provided (such as for `Walk-in Customer` with ID 1).
+  - `better-sqlite3` deserializes SQL `NULL` values to JavaScript `null`.
+  - When `selectedCustomer` was passed into `createInvoice`, `customer_gstin` and `customer_address` were passed as `null`.
+  - The Zod IPC boundary validation schema used `z.string().max(20).optional()`, which only accepted `string | undefined`, rejecting `null` with `Expected string, received null`.
+- **Changes Applied:**
+  - `src/shared/types/models.ts`: Updated `Customer`, `CreateInvoiceInput`, `PaymentTenderInput`, and `CreateCustomerInput` to explicitly support `null` for optional fields (`phone`, `gstin`, `address`, `state_code`, `notes`, `reference_number`).
+  - `src/main/ipc/schemas.ts`: Created centralized, electron-independent Zod boundary schemas using `.nullable().optional()` for optional customer attributes and notes while keeping strict validation on mandatory fields (items array non-empty, quantities positive, unit prices non-negative, valid payment mode enum, etc.).
+  - `src/main/ipc/handlers.ts`: Refactored to import canonical schemas from `schemas.ts`.
+  - `src/main/db/billingRepo.ts`: Added `normalizeOptionalString()` helper function to trim whitespace and normalize empty strings/nulls, ensuring walk-in customers safely record `NULL` snapshots and registered customers retain valid GSTIN/address snapshots.
+  - `src/renderer/features/billing/PosBilling.tsx`: Strictly typed invoice payload to `CreateInvoiceInput` with explicit null coalescing (`?? null`).
+  - `scripts/switch-bindings.mjs` & `tests/setup.ts`: Enhanced binding switcher and test setup to gracefully handle Windows `EBUSY` file locking when Electron is running during test execution by directly loading the Node.js ABI binary in Vitest.
+- **Verification & Test Results:**
+  - **Automated Tests:** 72 tests passing across 12 files (5 new regression tests added).
+  - **Typecheck:** 0 errors (`tsc --noEmit`).
+  - **Production Build:** Vite and Electron builds passed cleanly.
+  - **Smoke Test:** Electron launch smoke test succeeded with 4 migrations verified.
+
+---
+
 ## Log Entry: 2026-10-25 - Milestone 4: POS & GST Billing
 
 ### Summary of Work Completed

@@ -22,9 +22,9 @@ tests/
 │   │   ├── dashboardRepo.test.ts       # 6 tests: Aggregate queries, cancellations exclusion, date boundaries
 │   │   ├── productRepo.test.ts         # 8 tests: CRUD, variants, transactions, safe deletion, unique SKU/barcodes
 │   │   ├── inventoryRepo.test.ts       # 5 tests: Adjustments, variance, ledger audit trail, variant rollup
-│   │   └── billingRepo.test.ts         # 8 tests: Sequential numbering, atomic sale creation, stock deduction, split payment, cancellation & restitution
+│   │   └── billingRepo.test.ts         # 10 tests: Sequential numbering, atomic sale, stock deduction, walk-in/registered snapshots, cancellation
 │   ├── ipc/
-│   │   └── validation.test.ts          # 5 tests: Zod IPC boundary validation for billing, cancellation, settings
+│   │   └── validation.test.ts          # 8 tests: Zod IPC boundary validation for billing, null walk-in customer fields, settings
 │   └── utils/
 │       └── billingMath.test.ts         # 6 tests: Integer paise tax math, intra/inter-state split, rounding, discounts, words
 └── components/
@@ -35,7 +35,7 @@ tests/
     └── PosBilling.test.tsx             # 5 tests: Register rendering, search & cart addition, stock limits, inter-state IGST, sale completion & print modal
 ```
 
-**Total Active Test Count:** 67 automated tests passing across 12 test files with zero regressions.
+**Total Active Test Count:** 72 automated tests passing across 12 test files with zero regressions.
 
 ### Key Milestone 4 Test Cases:
 - **`billingMath.test.ts`:**

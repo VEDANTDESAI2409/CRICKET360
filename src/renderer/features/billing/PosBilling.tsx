@@ -25,6 +25,7 @@ import {
   Customer,
   SalesInvoice,
   PaymentMode,
+  CreateInvoiceInput,
 } from '../../../shared/types/models';
 import {
   calculateInvoiceTotals,
@@ -450,23 +451,23 @@ export const PosBilling: React.FC = () => {
         if (upiP > 0) payments.push({ mode: 'UPI' as PaymentMode, amount_paise: upiP });
       }
 
-      const input = {
+      const input: CreateInvoiceInput = {
         customer_id: selectedCustomer?.id || 1,
         customer_name: selectedCustomer?.name,
-        customer_phone: selectedCustomer?.phone,
-        customer_gstin: selectedCustomer?.gstin,
-        customer_address: selectedCustomer?.address,
+        customer_phone: selectedCustomer?.phone ?? null,
+        customer_gstin: selectedCustomer?.gstin ?? null,
+        customer_address: selectedCustomer?.address ?? null,
         customer_state_code: selectedCustomer?.state_code || shopSettings.shopStateCode,
         items: cart.map((c) => ({
           product_id: c.product_id,
-          variant_id: c.variant_id,
+          variant_id: c.variant_id ?? null,
           quantity: c.quantity,
           unit_price_paise: c.unit_price_paise,
           discount_amount_paise: c.discount_amount_paise,
         })),
         discount_amount_paise: parseRupeesToPaise(invoiceDiscountRupees),
         payments,
-        notes: invoiceNotes.trim() || undefined,
+        notes: invoiceNotes.trim() || null,
       };
 
       if (!window.api) {

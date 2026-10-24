@@ -228,10 +228,10 @@ export interface Supplier {
 export interface Customer {
   id: number;
   name: string;
-  phone?: string;
-  gstin?: string;
-  address?: string;
-  state_code?: string;
+  phone?: string | null;
+  gstin?: string | null;
+  address?: string | null;
+  state_code?: string | null;
   credit_limit_paise?: number;
   balance_paise: number;
   is_active: number;
@@ -324,20 +324,20 @@ export interface CreateInvoiceItemInput {
 export interface PaymentTenderInput {
   mode: PaymentMode;
   amount_paise: number;
-  reference_number?: string;
+  reference_number?: string | null;
 }
 
 export interface CreateInvoiceInput {
   customer_id?: number | null;
-  customer_name?: string;
-  customer_phone?: string;
-  customer_gstin?: string;
-  customer_address?: string;
-  customer_state_code?: string;
+  customer_name?: string | null;
+  customer_phone?: string | null;
+  customer_gstin?: string | null;
+  customer_address?: string | null;
+  customer_state_code?: string | null;
   items: CreateInvoiceItemInput[];
   discount_amount_paise?: number;
   payments: PaymentTenderInput[];
-  notes?: string;
+  notes?: string | null;
 }
 
 export interface InvoiceFilterQuery {
@@ -351,10 +351,10 @@ export interface InvoiceFilterQuery {
 
 export interface CreateCustomerInput {
   name: string;
-  phone?: string;
-  gstin?: string;
-  address?: string;
-  state_code?: string;
+  phone?: string | null;
+  gstin?: string | null;
+  address?: string | null;
+  state_code?: string | null;
   credit_limit_paise?: number;
 }
 

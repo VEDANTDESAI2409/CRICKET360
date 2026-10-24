@@ -10,6 +10,12 @@ import {
 } from '../../shared/types/models';
 import { calculateInvoiceTotals } from '../../shared/utils/billingMath';
 
+function normalizeOptionalString(val?: string | null): string | null {
+  if (val === null || val === undefined) return null;
+  const trimmed = val.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export class BillingRepo {
   constructor(private db: Database.Database) {}
 
@@ -109,10 +115,10 @@ export class BillingRepo {
 
     const res = stmt.run(
       input.name.trim(),
-      input.phone?.trim() || null,
-      input.gstin?.trim() || null,
-      input.address?.trim() || null,
-      input.state_code?.trim() || '27',
+      normalizeOptionalString(input.phone),
+      normalizeOptionalString(input.gstin),
+      normalizeOptionalString(input.address),
+      normalizeOptionalString(input.state_code) || '27',
       input.credit_limit_paise || 0
     );
 
@@ -331,14 +337,23 @@ export class BillingRepo {
         )
       `);
 
+      const customerNameSnapshot =
+        normalizeOptionalString(input.customer_name) || customer.name || 'Walk-in Customer';
+      const customerPhoneSnapshot =
+        normalizeOptionalString(input.customer_phone) || normalizeOptionalString(customer.phone);
+      const customerGstinSnapshot =
+        normalizeOptionalString(input.customer_gstin) || normalizeOptionalString(customer.gstin);
+      const customerAddressSnapshot =
+        normalizeOptionalString(input.customer_address) || normalizeOptionalString(customer.address);
+
       const invoiceRes = insertInvoiceStmt.run(
         invoiceNumber,
         today,
         customer.id,
-        input.customer_name || customer.name,
-        input.customer_phone || customer.phone || null,
-        input.customer_gstin || customer.gstin || null,
-        input.customer_address || customer.address || null,
+        customerNameSnapshot,
+        customerPhoneSnapshot,
+        customerGstinSnapshot,
+        customerAddressSnapshot,
         placeOfSupply,
         isInterState ? 1 : 0,
         calculation.taxableAmountPaise,
@@ -352,7 +367,7 @@ export class BillingRepo {
         Math.min(totalPaidPaise, calculation.grandTotalPaise),
         balanceAmountPaise,
         paymentStatus,
-        input.notes || null,
+        normalizeOptionalString(input.notes),
         userId || null
       );
 
@@ -469,7 +484,7 @@ export class BillingRepo {
             invoiceId,
             tender.amount_paise,
             tender.mode,
-            tender.reference_number || null,
+            normalizeOptionalString(tender.reference_number),
             `Payment for invoice ${invoiceNumber}`,
             userId || null
           );
