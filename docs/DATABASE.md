@@ -230,6 +230,11 @@ PRAGMA temp_store = MEMORY;        -- Use memory for temporary tables & sorts
 Migrations are version-controlled `.sql` files stored under `src/main/db/migrations/`:
 1. `001_initial_schema.sql` (Milestone 1): Base schema with categories, brands, units, customers, suppliers, settings, and users.
 2. `002_transactions_foundation.sql` (Milestone 2): Adds `stock_quantity` columns to `products` and `product_variants`, creates `sales_invoices`, `purchases`, `stock_movements`, and seeds initial cricket catalog items.
+3. `003_catalog_and_inventory.sql` (Milestone 3):
+   - Adds `tax_rate_percent` column (REAL DEFAULT 12.0) to `products` and `product_variants`.
+   - Creates the `hsn_codes` registry table with standard sports GST classifications (e.g. `9506` for sports equipment @ 12%, `6404` for footwear @ 18%, `6109` for sports apparel @ 12%, `6506` for protective helmets @ 18%).
+   - Creates `stock_adjustments` table with auto-generated adjustment numbers (`ADJ-YYYYMMDD-XXXX`), old vs new quantities, variance, reason codes, and audit notes.
+   - Adds performance indices: `idx_products_active_stock`, `idx_products_cat_brand`, `idx_stock_mov_prod_created`, and `idx_stock_adj_prod`.
 
 A dedicated migration tracking table `_schema_migrations` tracks installed migrations:
 ```sql

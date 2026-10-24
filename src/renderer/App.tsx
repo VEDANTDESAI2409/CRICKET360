@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Sidebar, NavModule } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Dashboard } from './features/dashboard/Dashboard';
+import { ProductCatalog } from './features/products/ProductCatalog';
+import { InventoryManagement } from './features/inventory/InventoryManagement';
 import { Card } from './components/Card';
 import { Button } from './components/Button';
-import { AppInfo, DatabaseStats, HealthCheckResult } from '../shared/types/models';
 import {
-  FileCode2,
-  ArrowLeft,
-} from 'lucide-react';
+  AppInfo,
+  DatabaseStats,
+  HealthCheckResult,
+  ProductWithDetails,
+} from '../shared/types/models';
+import { FileCode2, ArrowLeft } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentModule, setCurrentModule] = useState<NavModule>('dashboard');
@@ -17,6 +21,7 @@ export const App: React.FC = () => {
   const [health, setHealth] = useState<HealthCheckResult | null>(null);
   const [lowStockCount, setLowStockCount] = useState<number>(0);
   const [globalSearch, setGlobalSearch] = useState<string>('');
+  const [productForAdjustment, setProductForAdjustment] = useState<ProductWithDetails | null>(null);
 
   // Settings testing state
   const [settingKey, setSettingKey] = useState<string>('store_tagline');
@@ -40,7 +45,7 @@ export const App: React.FC = () => {
         productCount: 6,
         customerCount: 1,
         supplierCount: 1,
-        migrationVersion: '002_transactions_foundation',
+        migrationVersion: '003_catalog_and_inventory',
       });
       setHealth({
         status: 'HEALTHY',
@@ -195,7 +200,10 @@ export const App: React.FC = () => {
       {/* 1. Left Navigation Sidebar */}
       <Sidebar
         currentModule={currentModule}
-        onSelectModule={setCurrentModule}
+        onSelectModule={(mod) => {
+          if (mod !== 'inventory') setProductForAdjustment(null);
+          setCurrentModule(mod);
+        }}
         appVersion={appInfo?.version ? `v${appInfo.version}` : 'v1.0.0'}
         lowStockCount={lowStockCount}
       />
@@ -227,6 +235,19 @@ export const App: React.FC = () => {
             <Dashboard
               onNavigateToModule={setCurrentModule}
               externalSearchQuery={globalSearch}
+            />
+          ) : currentModule === 'products' ? (
+            <ProductCatalog
+              onNavigateToModule={setCurrentModule}
+              onOpenAdjustStock={(p) => {
+                setProductForAdjustment(p);
+                setCurrentModule('inventory');
+              }}
+            />
+          ) : currentModule === 'inventory' ? (
+            <InventoryManagement
+              onNavigateToModule={setCurrentModule}
+              initialSelectedProduct={productForAdjustment}
             />
           ) : currentModule === 'settings' ? (
             /* Settings Panel */
@@ -320,7 +341,7 @@ export const App: React.FC = () => {
                     <div className="flex justify-between py-1.5 border-b border-retail-border">
                       <span className="text-retail-muted">Migration Level:</span>
                       <span className="font-mono text-retail-text">
-                        {stats?.migrationVersion || '002_transactions_foundation'}
+                        {stats?.migrationVersion || '003_catalog_and_inventory'}
                       </span>
                     </div>
                   </div>

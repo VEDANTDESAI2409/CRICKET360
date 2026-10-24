@@ -1,5 +1,58 @@
 # Cricket360: Development Work Log
 
+## Log Entry: 2026-10-25 - Milestone 3: Product Catalog & Inventory Management
+
+### Summary of Work Completed
+- **Product Catalog Management (`ProductCatalog.tsx`):**
+  - High-density data table with real-time text search across product name, SKU, barcode, and brand.
+  - Multi-select filters for categories, brands, and stock status (`All`, `In Stock`, `Low Stock`, `Out of Stock`), plus sortable table columns (`Name`, `SKU`, `Category`, `Brand`, `Cost`, `Selling Price`, `Stock`, `Status`).
+  - "+ Add Product" modal with auto-generation of unique SKUs (`CAT-BRD-XXXX`) and EAN-13 barcodes (`890XXXXXXXXX`).
+  - Strict integer paise financial precision with live margin percentage calculation.
+  - Equipment variant matrix builder supporting sizes (SH, LH, Harrow, 6), shoe sizes (UK 6-12), apparel sizes, weights, and colors.
+  - Product specifications modal displaying product attributes, variant breakdowns, and recent stock movements audit trail.
+  - Inactive product toggle and safe deletion guard preventing removal of products with historical transactions.
+- **Inventory Reconciliation & Movement Ledger (`InventoryManagement.tsx`):**
+  - KPI summary metrics: Total Stock Units across showroom/store, Landed Cost Valuation (in integer paise), Low-Stock count, and Out-of-Stock count.
+  - Dual-tab workflow: Stock Reconciliation table and Immutable Movement Ledger.
+  - Stock adjustment modal with real-time variance calculation (+/- units) and mandatory reason codes (`PHYSICAL_AUDIT_MISMATCH`, `DAMAGED_IN_STORE`, `EXPIRED_DEFECTIVE`, `SAMPLE_DEMO`, `THEFT_OR_LOSS`, `FOUND_SURPLUS`, `OTHER`).
+  - Real-time audit trail displaying before/after balances, movement types, reference IDs, and user notes.
+- **Database Migration `003_catalog_and_inventory.sql`:**
+  - Added `tax_rate_percent` column to `products` and `product_variants`.
+  - Created `hsn_codes` registry table populated with Indian GST classifications for sports goods (`9506`, `6404`, `6109`, `6506`).
+  - Created `stock_adjustments` table for tracking physical count discrepancies.
+  - Added composite indices for fast catalog filtering and stock movement lookups.
+- **Transactional Repositories & Typed IPC:**
+  - `src/main/db/productRepo.ts`: Atomic transactions for product and variant creation, opening stock movement insertion, and safe deletion checks.
+  - `src/main/db/inventoryRepo.ts`: Synchronous stock adjustment transactions updating balance ledgers and rolling up variant quantities to parent records.
+  - `src/main/db/mastersRepo.ts`: Master queries for categories, brands, units, and HSN codes.
+  - `src/main/ipc/handlers.ts`: Zod-validated IPC channels for `products:*`, `inventory:*`, and `masters:*`.
+- **Reusable UI Component:**
+  - `<Modal>`: Accessible, responsive modal dialog supporting custom titles, subtitles, sizes, and footers matching the retail design system.
+- **Navigation Integration:**
+  - Activated "Products & Catalog" and "Inventory & Stock" sidebar items in `Sidebar.tsx` and wired active views in `App.tsx`.
+
+### Verification & Test Results
+- **TypeScript:** `npm run typecheck` (`tsc --noEmit`) -> 0 errors.
+- **Renderer Build:** `npm run build:renderer` (`vite build`) -> 0 errors.
+- **Electron Build:** `npm run build:electron` (`esbuild`) -> 0 errors.
+- **Test Suite:** `npm test` (`vitest run`):
+  - `tests/unit/db/productRepo.test.ts` (8 tests passed)
+  - `tests/unit/db/inventoryRepo.test.ts` (5 tests passed)
+  - `tests/unit/db/dashboardRepo.test.ts` (6 tests passed)
+  - `tests/unit/db/sqlite-foundation.test.ts` (6 tests passed)
+  - `tests/unit/ipc/validation.test.ts` (3 tests passed)
+  - `tests/components/ProductCatalog.test.tsx` (4 tests passed)
+  - `tests/components/InventoryManagement.test.tsx` (3 tests passed)
+  - `tests/components/Dashboard.test.tsx` (5 tests passed)
+  - `tests/components/UiShell.test.tsx` (6 tests passed)
+  - **Total:** 46 passed across 9 test files, 0 failed.
+- **Smoke Test:** `npm run smoke-test` -> Successfully executed with Electron runtime; applied migrations 001, 002, and 003.
+
+### Next Milestone
+- Proceed with **Milestone 4: Enhanced Inventory Management & Valuation** (or proceed per roadmap once approved by user).
+
+---
+
 ## Log Entry: 2026-10-25 - Milestone 2: Main Interface, Dashboard & Retail Design System
 
 ### Summary of Work Completed

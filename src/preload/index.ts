@@ -20,6 +20,32 @@ const api: IpcApi = {
     getRecentTransactions: () => ipcRenderer.invoke('dashboard:getRecentTransactions'),
     getWeeklySalesSummary: () => ipcRenderer.invoke('dashboard:getWeeklySalesSummary'),
   },
+  products: {
+    getAll: (filters) => ipcRenderer.invoke('products:getAll', filters),
+    getById: (id) => ipcRenderer.invoke('products:getById', id),
+    create: (data) => ipcRenderer.invoke('products:create', data),
+    update: (data) => ipcRenderer.invoke('products:update', data),
+    toggleActive: (id, is_active) => ipcRenderer.invoke('products:toggleActive', id, is_active),
+    delete: (id) => ipcRenderer.invoke('products:delete', id),
+    validateSku: (sku, excludeProductId) => ipcRenderer.invoke('products:validateSku', sku, excludeProductId),
+    validateBarcode: (barcode, excludeProductId) => ipcRenderer.invoke('products:validateBarcode', barcode, excludeProductId),
+    generateSku: (categoryCode, brandCode) => ipcRenderer.invoke('products:generateSku', categoryCode, brandCode),
+    generateBarcode: () => ipcRenderer.invoke('products:generateBarcode'),
+    getVariants: (productId) => ipcRenderer.invoke('products:getVariants', productId),
+  },
+  inventory: {
+    getStockMovements: (productId, limit) => ipcRenderer.invoke('inventory:getStockMovements', productId, limit),
+    adjustStock: (data) => ipcRenderer.invoke('inventory:adjustStock', data),
+    getAdjustments: (productId, limit) => ipcRenderer.invoke('inventory:getAdjustments', productId, limit),
+  },
+  masters: {
+    getCategories: () => ipcRenderer.invoke('masters:getCategories'),
+    getBrands: () => ipcRenderer.invoke('masters:getBrands'),
+    getUnits: () => ipcRenderer.invoke('masters:getUnits'),
+    getHsnCodes: () => ipcRenderer.invoke('masters:getHsnCodes'),
+    createCategory: (name, code, description) => ipcRenderer.invoke('masters:createCategory', name, code, description),
+    createBrand: (name, code) => ipcRenderer.invoke('masters:createBrand', name, code),
+  },
 };
 
 // Expose the protected API to the renderer process

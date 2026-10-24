@@ -4,6 +4,40 @@ All notable changes to the Cricket360 project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-m3] - 2026-10-25
+### Added - Milestone 3: Product Catalog & Inventory Management
+- **Complete Product Catalog Module (`ProductCatalog.tsx`):**
+  - High-density product inventory table with live search across name, SKU, barcode, and brand.
+  - Multi-criteria filtering by category, brand, and stock status (`All`, `In Stock`, `Low Stock`, `Out of Stock`), plus sortable columns.
+  - "+ Add Product" modal dialog with automatic SKU generation (`CAT-BRD-XXXX`) and EAN-13 barcode generation (`890XXXXXXXXX`).
+  - Integer paise pricing precision (`purchase_cost_paise`, `selling_price_paise`, `mrp_paise`) with live margin percentage calculation.
+  - Product variant matrix builder supporting cricket bat sizes (SH, LH, Harrow, 6), shoe sizes (UK 6-12), apparel sizes, weights, and colors.
+  - View details modal showing comprehensive specifications, variant breakdown, and recent stock movements audit trail.
+  - Inactive product toggle and safe deletion guard preventing removal of products with historical transactions.
+- **Inventory Reconciliation & Movement Ledger Module (`InventoryManagement.tsx`):**
+  - Summary metric cards tracking Total Stock Units across showroom/store, Landed Cost Valuation, Low-Stock items, and Out-of-Stock count.
+  - Dual-tab workflow: Stock Reconciliation & Audit and Immutable Movement Ledger.
+  - Stock adjustment modal with automatic variance computation (+/- units) and mandatory reason codes (`PHYSICAL_AUDIT_MISMATCH`, `DAMAGED_IN_STORE`, `EXPIRED_DEFECTIVE`, `SAMPLE_DEMO`, `THEFT_OR_LOSS`, `FOUND_SURPLUS`, `OTHER`).
+  - Real-time audit trail displaying before/after balances, movement types, reference IDs, and user notes.
+- **Database Migration `003_catalog_and_inventory.sql`:**
+  - Added `tax_rate_percent` column to `products` and `product_variants`.
+  - Created `hsn_codes` registry table populated with Indian GST classifications for sports goods (`9506`, `6404`, `6109`, `6506`).
+  - Created `stock_adjustments` table for tracking physical count discrepancies.
+  - Added composite indices for fast catalog filtering and stock movement lookups.
+- **Transactional Repositories & Typed IPC:**
+  - `productRepo.ts`: Atomic transactions for product and variant creation, opening stock movement insertion, and safe deletion checks.
+  - `inventoryRepo.ts`: Synchronous stock adjustment transactions updating balance ledgers and rolling up variant quantities to parent records.
+  - `mastersRepo.ts`: Master queries for categories, brands, units, and HSN codes.
+  - `handlers.ts`: Zod-validated IPC channels for `products:*`, `inventory:*`, and `masters:*`.
+- **Reusable UI Component:**
+  - `<Modal>`: Accessible, responsive modal dialog supporting custom titles, subtitles, sizes, and footers matching the retail design system.
+- **Automated Testing & Verification:**
+  - 20 new tests added (8 in `productRepo.test.ts`, 5 in `inventoryRepo.test.ts`, 4 in `ProductCatalog.test.tsx`, 3 in `InventoryManagement.test.tsx`).
+  - Total automated test suite expanded to 46 passing tests across 9 test files.
+  - Verified with TypeScript typecheck, production build, and Electron launch smoke test.
+
+---
+
 ## [1.0.0-m2] - 2026-10-25
 ### Added - Milestone 2: Main Interface, Dashboard & Retail Design System
 - **Forest Green & White Retail Design System:** Fully refined application theme matching the reference layout using strict tokens (`#124B36` Dark Green, `#167A53` Primary Green, `#EAF5EF` Surface Green, `#F3F5F4` App Background, `#FFFFFF` White Cards, `#18231D` Primary Text, `#7A8580` Muted Text).

@@ -91,14 +91,26 @@ The IPC layer is organized into modular channels:
 - `app:getInfo` / `app:getHealthCheck` - Application environment, packaging state, database integrity.
 - `settings:getAll` / `settings:get` / `settings:set` - Key-value persistent configuration store.
 - `db:getStats` - Database entity counts and migration status.
-- `db:products:*` - Product catalog, variants, barcodes, pricing (Milestone 3).
-- `db:inventory:*` - Stock queries, adjustments, movement logs, valuation (Milestone 3 / 4).
+- `products:getAll` / `products:getById` - Catalog search, category/brand/stock filtering, sorting, and full variant retrieval.
+- `products:create` / `products:update` / `products:delete` / `products:toggleActive` - Product catalog lifecycle with auto SKU/barcode generation, variant matrix creation, and safe deletion guards.
+- `products:generateSku` / `products:generateBarcode` - Collision-free unique SKU and EAN-13 barcode generation.
+- `inventory:adjustStock` - Stock reconciliation with mandatory reason codes, variance calculation, and immutable ledger insertion.
+- `inventory:getStockMovements` - Real-time audit trail of all historical stock movements with before/after balances.
+- `masters:getCategories` / `masters:getBrands` / `masters:getUnits` / `masters:getHsnCodes` - Master taxonomy and GST registry queries.
 - `db:billing:*` - POS invoice creation, payment recording, cancellation (Milestone 6).
 - `db:purchases:*` - Purchase bill entry, supplier returns (Milestone 5).
 - `db:parties:*` - Customers, suppliers, ledgers, credit balances (Milestone 5 / 7).
 - `db:reports:*` - GST summaries, sales reports, inventory valuations (Milestone 8).
 - `system:print:*` - Silent printing to thermal or default printer, A4 print preview (Milestone 6).
 - `system:backup:*` - Manual backup generation, database restore, integrity checks (Milestone 9).
+
+### 4.1 Transactional Guarantees for Catalog & Stock Operations
+All stock mutations and variant matrix insertions execute within synchronous `db.transaction()` boundaries:
+1. **Opening Stock Ledger Sync:** When creating a product or variant with an opening stock quantity > 0, an immutable `stock_movements` record (`movement_type = 'OPENING_STOCK'`) is inserted in the exact same transaction.
+2. **Variant Stock Rollup:** Updating stock for any product variant immediately recalculates and updates the parent product's cumulative `stock_quantity`.
+3. **Safe Product Deletion Guard:** Products associated with historical `SALE_INVOICE` or `PURCHASE_RECEIPT` movements cannot be permanently deleted; the repository raises an explicit error advising deactivation instead.
+4. **Reason-Enforced Adjustments:** Adjustments mandate a valid reason code (`PHYSICAL_AUDIT_MISMATCH`, `DAMAGED_IN_STORE`, `EXPIRED_DEFECTIVE`, `SAMPLE_DEMO`, `THEFT_OR_LOSS`, `FOUND_SURPLUS`, `OTHER`) recorded both in `stock_adjustments` and `stock_movements`.
+
 
 ---
 

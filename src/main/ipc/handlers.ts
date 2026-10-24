@@ -1,16 +1,92 @@
 import { ipcMain, app } from 'electron';
 import { z } from 'zod';
 import { getDatabase, checkDatabaseHealth, getDatabaseStats, getActiveDbPath } from '../db/connection';
-import { AppInfo, AppSetting } from '../../shared/types/models';
+import {
+  AppInfo,
+  AppSetting,
+  CreateProductInput,
+  UpdateProductInput,
+  StockAdjustmentInput,
+  ProductFilterQuery,
+} from '../../shared/types/models';
 import { IpcResult } from '../../shared/types/ipc';
+import * as productRepo from '../db/productRepo';
+import * as inventoryRepo from '../db/inventoryRepo';
+import * as mastersRepo from '../db/mastersRepo';
+import * as dashboardRepo from '../db/dashboardRepo';
 
 // Zod schemas for boundary validation
 const settingKeySchema = z.string().min(1).max(100).regex(/^[a-z0-9_]+$/i);
 const settingValueSchema = z.string().max(2000);
-
 const setSettingSchema = z.object({
   key: settingKeySchema,
   value: settingValueSchema,
+});
+
+const createVariantSchema = z.object({
+  variant_name: z.string().min(1).max(150),
+  sku: z.string().min(1).max(60),
+  barcode: z.string().max(60).optional(),
+  size: z.string().max(50).optional(),
+  color: z.string().max(50).optional(),
+  purchase_cost_paise: z.number().int().nonnegative(),
+  selling_price_paise: z.number().int().nonnegative(),
+  mrp_paise: z.number().int().nonnegative(),
+  opening_stock_quantity: z.number().int().nonnegative(),
+  tax_rate_percent: z.number().nonnegative().optional(),
+});
+
+const createProductSchema = z.object({
+  name: z.string().min(2).max(200),
+  sku: z.string().min(2).max(60),
+  barcode: z.string().max(60).optional(),
+  category_id: z.number().int().positive(),
+  brand_id: z.number().int().positive(),
+  unit_id: z.number().int().positive(),
+  hsn_code: z.string().max(20).optional(),
+  tax_rate_percent: z.number().nonnegative().optional(),
+  purchase_cost_paise: z.number().int().nonnegative(),
+  selling_price_paise: z.number().int().nonnegative(),
+  mrp_paise: z.number().int().nonnegative(),
+  min_stock_level: z.number().int().nonnegative(),
+  reorder_level: z.number().int().nonnegative(),
+  opening_stock_quantity: z.number().int().nonnegative(),
+  has_variants: z.boolean(),
+  variants: z.array(createVariantSchema).optional(),
+});
+
+const updateProductSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(2).max(200),
+  sku: z.string().min(2).max(60),
+  barcode: z.string().max(60).optional(),
+  category_id: z.number().int().positive(),
+  brand_id: z.number().int().positive(),
+  unit_id: z.number().int().positive(),
+  hsn_code: z.string().max(20).optional(),
+  tax_rate_percent: z.number().nonnegative().optional(),
+  purchase_cost_paise: z.number().int().nonnegative(),
+  selling_price_paise: z.number().int().nonnegative(),
+  mrp_paise: z.number().int().nonnegative(),
+  min_stock_level: z.number().int().nonnegative(),
+  reorder_level: z.number().int().nonnegative(),
+  is_active: z.number().int().min(0).max(1),
+});
+
+const stockAdjustmentSchema = z.object({
+  product_id: z.number().int().positive(),
+  variant_id: z.number().int().positive().optional(),
+  new_quantity: z.number().int().nonnegative(),
+  reason: z.enum([
+    'PHYSICAL_AUDIT_MISMATCH',
+    'DAMAGED_IN_STORE',
+    'EXPIRED_DEFECTIVE',
+    'SAMPLE_DEMO',
+    'THEFT_OR_LOSS',
+    'FOUND_SURPLUS',
+    'OTHER',
+  ]),
+  notes: z.string().max(1000).optional(),
 });
 
 export function registerIpcHandlers(): void {
@@ -94,7 +170,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('dashboard:getMetrics', async () => {
     try {
       const db = getDatabase();
-      const metrics = (await import('../db/dashboardRepo')).getDashboardMetrics(db);
+      const metrics = dashboardRepo.getDashboardMetrics(db);
       return { success: true, data: metrics };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -104,7 +180,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('dashboard:getLowStockAlerts', async () => {
     try {
       const db = getDatabase();
-      const alerts = (await import('../db/dashboardRepo')).getLowStockAlerts(db);
+      const alerts = dashboardRepo.getLowStockAlerts(db);
       return { success: true, data: alerts };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -114,7 +190,7 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('dashboard:getRecentTransactions', async () => {
     try {
       const db = getDatabase();
-      const transactions = (await import('../db/dashboardRepo')).getRecentTransactions(db);
+      const transactions = dashboardRepo.getRecentTransactions(db);
       return { success: true, data: transactions };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
@@ -124,8 +200,213 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('dashboard:getWeeklySalesSummary', async () => {
     try {
       const db = getDatabase();
-      const summary = (await import('../db/dashboardRepo')).getWeeklySalesSummary(db);
+      const summary = dashboardRepo.getWeeklySalesSummary(db);
       return { success: true, data: summary };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // 6. Product Catalog Handlers
+  ipcMain.handle('products:getAll', async (_event, filters?: ProductFilterQuery) => {
+    try {
+      const db = getDatabase();
+      const products = productRepo.getAllProducts(db, filters);
+      return { success: true, data: products };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:getById', async (_event, id: number) => {
+    try {
+      const db = getDatabase();
+      const product = productRepo.getProductById(db, Number(id));
+      return { success: true, data: product };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:create', async (_event, payload: unknown) => {
+    try {
+      const data = createProductSchema.parse(payload) as CreateProductInput;
+      const db = getDatabase();
+      const created = productRepo.createProduct(db, data);
+      return { success: true, data: created };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:update', async (_event, payload: unknown) => {
+    try {
+      const data = updateProductSchema.parse(payload) as UpdateProductInput;
+      const db = getDatabase();
+      const updated = productRepo.updateProduct(db, data);
+      return { success: true, data: updated };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:toggleActive', async (_event, id: number, isActive: number) => {
+    try {
+      const db = getDatabase();
+      const success = productRepo.toggleProductActive(db, Number(id), Number(isActive));
+      return { success: true, data: success };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:delete', async (_event, id: number) => {
+    try {
+      const db = getDatabase();
+      const success = productRepo.deleteProduct(db, Number(id));
+      return { success: true, data: success };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:validateSku', async (_event, sku: string, excludeProductId?: number) => {
+    try {
+      const db = getDatabase();
+      const available = productRepo.validateSku(db, String(sku), excludeProductId ? Number(excludeProductId) : undefined);
+      return { success: true, data: { available } };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:validateBarcode', async (_event, barcode: string, excludeProductId?: number) => {
+    try {
+      const db = getDatabase();
+      const available = productRepo.validateBarcode(db, String(barcode), excludeProductId ? Number(excludeProductId) : undefined);
+      return { success: true, data: { available } };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:generateSku', async (_event, categoryCode: string, brandCode: string) => {
+    try {
+      const db = getDatabase();
+      const sku = productRepo.generateSku(db, String(categoryCode), String(brandCode));
+      return { success: true, data: sku };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:generateBarcode', async () => {
+    try {
+      const barcode = productRepo.generateBarcode();
+      return { success: true, data: barcode };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('products:getVariants', async (_event, productId: number) => {
+    try {
+      const db = getDatabase();
+      const variants = productRepo.getProductVariants(db, Number(productId));
+      return { success: true, data: variants };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // 7. Inventory & Stock Adjustment Handlers
+  ipcMain.handle('inventory:getStockMovements', async (_event, productId?: number, limit?: number) => {
+    try {
+      const db = getDatabase();
+      const movements = inventoryRepo.getStockMovements(db, productId ? Number(productId) : undefined, limit ? Number(limit) : 50);
+      return { success: true, data: movements };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('inventory:adjustStock', async (_event, payload: unknown) => {
+    try {
+      const input = stockAdjustmentSchema.parse(payload) as StockAdjustmentInput;
+      const db = getDatabase();
+      const adj = inventoryRepo.adjustStock(db, input);
+      return { success: true, data: adj };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('inventory:getAdjustments', async (_event, productId?: number, limit?: number) => {
+    try {
+      const db = getDatabase();
+      const adjs = inventoryRepo.getStockAdjustments(db, productId ? Number(productId) : undefined, limit ? Number(limit) : 50);
+      return { success: true, data: adjs };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // 8. Masters Handlers (Categories, Brands, Units, HSN Codes)
+  ipcMain.handle('masters:getCategories', async () => {
+    try {
+      const db = getDatabase();
+      const categories = mastersRepo.getCategories(db);
+      return { success: true, data: categories };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('masters:getBrands', async () => {
+    try {
+      const db = getDatabase();
+      const brands = mastersRepo.getBrands(db);
+      return { success: true, data: brands };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('masters:getUnits', async () => {
+    try {
+      const db = getDatabase();
+      const units = mastersRepo.getUnits(db);
+      return { success: true, data: units };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('masters:getHsnCodes', async () => {
+    try {
+      const db = getDatabase();
+      const hsnCodes = mastersRepo.getHsnCodes(db);
+      return { success: true, data: hsnCodes };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('masters:createCategory', async (_event, name: string, code: string, description?: string) => {
+    try {
+      const db = getDatabase();
+      const cat = mastersRepo.createCategory(db, String(name), String(code), description ? String(description) : undefined);
+      return { success: true, data: cat };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('masters:createBrand', async (_event, name: string, code: string) => {
+    try {
+      const db = getDatabase();
+      const brand = mastersRepo.createBrand(db, String(name), String(code));
+      return { success: true, data: brand };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }

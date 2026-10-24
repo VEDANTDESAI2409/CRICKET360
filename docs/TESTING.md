@@ -19,30 +19,42 @@ tests/
 ├── unit/
 │   ├── db/
 │   │   ├── sqlite-foundation.test.ts   # 6 tests: WAL mode, foreign keys, atomic migration rollback
-│   │   └── dashboardRepo.test.ts       # 6 tests: Aggregate queries, cancellations exclusion, date boundaries
+│   │   ├── dashboardRepo.test.ts       # 6 tests: Aggregate queries, cancellations exclusion, date boundaries
+│   │   ├── productRepo.test.ts         # 8 tests: CRUD, variants, transactions, safe deletion, unique SKU/barcodes
+│   │   └── inventoryRepo.test.ts       # 5 tests: Adjustments, variance, ledger audit trail, variant rollup
 │   └── ipc/
 │       └── validation.test.ts          # 3 tests: Zod IPC boundary validation for settings
 └── components/
     ├── UiShell.test.tsx                # 6 tests: Button, Card, Badge, Sidebar, Header
-    └── Dashboard.test.tsx              # 5 tests: MetricCard, SearchInput, Table sorting/empty, BarChart, ProgressDonut
+    ├── Dashboard.test.tsx              # 5 tests: MetricCard, SearchInput, Table sorting/empty, BarChart, ProgressDonut
+    ├── ProductCatalog.test.tsx         # 4 tests: Rendering, search filter, auto SKU generation/creation, view details modal
+    └── InventoryManagement.test.tsx    # 3 tests: Summary metrics, audit trail tab, physical stock adjustment & variance calculation
 ```
 
-**Total Active Test Count:** 26 automated tests passing with zero regressions.
+**Total Active Test Count:** 46 automated tests passing across 9 test files with zero regressions.
 
-### Key Milestone 2 Test Cases:
-- **`dashboardRepo.test.ts`:**
-  - Calculates active products, categories, stock units, and valuation against isolated SQLite fixtures.
-  - Verifies completed invoices are aggregated while `CANCELLED` invoices are strictly excluded.
-  - Verifies date boundaries (yesterday's invoices are excluded from today's sales).
-  - Verifies low-stock and out-of-stock threshold classification.
-  - Verifies rolling 7-day sales time series generation.
-- **`Dashboard.test.tsx`:**
-  - MetricCard featured and standard variant rendering.
-  - SearchInput keyboard badge (`F4`), clear button action, and controlled change.
-  - Table sorting toggles (`asc` / `desc`), loading skeletons, and empty state rendering.
-  - BarChart pill heights and ProgressDonut SVG gauge arc calculations.
-  - Low-stock inventory table searching and filter matching.
-  - Quick POS action button navigation (`+ New Bill (F2)`).
+### Key Milestone 3 Test Cases:
+- **`productRepo.test.ts`:**
+  - Product creation with unique SKU and EAN-13 barcode generation.
+  - Multi-variant matrix generation for cricket bat sizes (SH, LH, Harrow, 6) with variant-specific SKUs.
+  - Automatic `OPENING_STOCK` movement logging when opening stock > 0.
+  - Collision-prevention on duplicate SKU or barcode.
+  - Safe deletion protection preventing deletion when historical invoice or purchase movements exist.
+  - Active/inactive toggle preserving referential integrity.
+- **`inventoryRepo.test.ts`:**
+  - Reason-mandated stock adjustments with auto-generated adjustment numbers (`ADJ-YYYYMMDD-XXXX`).
+  - Strict movement ledger immutability and balance calculations (`balance_quantity_after`).
+  - Child variant stock adjustments automatically updating parent product's cumulative stock.
+  - Safe rejection when adjusting with missing or invalid reason codes.
+- **`ProductCatalog.test.tsx`:**
+  - High-density table rendering with margins, prices in rupees, and variant count badges.
+  - Real-time client-side search by product name, SKU, or brand.
+  - Add product modal workflow with auto-generated SKU and IPC submission.
+  - View details modal showing pricing breakdown, variants list, and recent stock movements audit trail.
+- **`InventoryManagement.test.tsx`:**
+  - Summary metric cards for total stock units, inventory landed cost valuation, and low-stock warnings.
+  - Tab switching between stock reconciliation and immutable movement ledger.
+  - Stock adjustment modal calculating positive/negative variances dynamically and submitting verified physical counts.
 
 ---
 
