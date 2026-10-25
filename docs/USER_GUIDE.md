@@ -19,9 +19,10 @@ The sidebar is organized into functional sections:
 - **Products & Catalog:** Master inventory list, product variants (size/color), MRP, selling prices, HSN codes, and barcode generation (Active - Milestone 3).
 - **Inventory & Stock:** Real-time stock audit, physical count reconciliation, and immutable movement ledger (Active - Milestone 3).
 - **POS Billing:** High-speed counter sales register with barcode scanning, instant discounts, multi-tender payments, and thermal/A4 printing (Active - Milestone 4).
-- **Purchases:** Inward purchase bills from manufacturers/wholesalers, purchase tax tracking, and supplier returns (Planned Milestone 5).
-- **Customers (Khata):** Customer contact details, credit limits, outstanding balances, and payment receipts (Planned Milestone 7).
-- **Suppliers:** Supplier directory, purchase history, and payable balances (Planned Milestone 5).
+- **Purchases:** Inward purchase bills from manufacturers/wholesalers, variant item builder, real-time GST, duplicate invoice validation, and purchase returns (Active - Combined Milestone 5).
+- **Customers (Khata):** Customer directory, credit limits, outstanding receivables, Khata statement, and payment collection (Active - Combined Milestone 5).
+- **Suppliers:** Supplier directory, contact information, GSTIN, payment terms, and vendor running ledger (Active - Combined Milestone 5).
+- **Payments:** Unified financial register for tracking inflows (sales, receipts) and outflows (vendor payouts) (Active - Combined Milestone 5).
 - **Reports & GST:** Daily sales registers, GSTR-1 summaries, category performance, and profit estimation (Planned Milestone 8).
 - **Expenses:** Petty cash and operating expense recording (shop rent, electricity, maintenance) (Planned Milestone 8).
 - **Settings:** Business profile, GSTIN, invoice numbering prefixes, thermal printer configuration, and database backups.
@@ -186,4 +187,73 @@ The dashboard provides real-time visibility into inventory levels, sales revenue
    - Enter a mandatory cancellation reason in the confirmation dialog.
    - The invoice status is marked as `CANCELLED`.
    - **Automatic Stock Restitution:** The system automatically restores stock for all items on the cancelled invoice (updating variant stock and rolling up parent product totals) and records compensatory `SALE_RETURN` audit movements in the inventory ledger.
+
+---
+
+## 8. Supplier Management & Inward Procurement (Purchases)
+
+### 8.1 Supplier Directory & Vendor Khata
+1. Navigate to **Suppliers** in the left sidebar.
+2. View active vendor accounts, contact numbers, GSTIN, payment terms (e.g., 30 days), and current payable dues.
+3. Click **Add Supplier** to onboard a new sports equipment manufacturer or distributor.
+4. Click **Khata** on any supplier to open their **Vendor Ledger Statement**:
+   - Chronological log of all inward purchase bills (credit) and payment disbursements (debit).
+   - Real-time running balance calculation ensuring transparency.
+
+### 8.2 Inwarding Goods & Recording Purchase Bills
+1. Navigate to **Purchases** in the left sidebar.
+2. Click **+ New Purchase Bill**.
+3. Select the supplier. The system automatically detects whether the supplier is intra-state (CGST + SGST) or inter-state (IGST) based on state codes.
+4. Enter the **Supplier Bill / Invoice #** (e.g. `INV-2026-9901`) and invoice date.
+   - *Duplicate Prevention:* If the same bill number is entered for this supplier, the system rejects it immediately to prevent duplicate accounting.
+5. Add inward items in the item builder:
+   - Select product and variant (size/color/weight).
+   - Enter quantity received and purchase cost per unit.
+   - Click **+ Add Item** to append to the bill grid.
+6. (Optional) Enter bill-level discounts or record initial advance payment.
+7. Click **Confirm Inward & Update Stock**:
+   - Inward goods are immediately added to warehouse stock across variants and parent products.
+   - Immutable `PURCHASE_RECEIPT` movements are logged in the inventory ledger.
+   - The unpaid balance is added to the supplier's payable account.
+
+### 8.3 Purchase Returns & Stock Adjustments
+1. In the Purchases table, click the **Purchase Return** button on any received bill.
+2. Enter the return quantities (cannot exceed available unreturned items).
+3. Enter a mandatory return reason (e.g., transit damage, factory defect).
+4. Click **Confirm Return & Adjust Stock**:
+   - Stock is deducted immediately with compensatory `PURCHASE_RETURN` movement logs.
+   - The supplier's account balance is credited by the return total.
+
+---
+
+## 9. Customer Accounts, Khata Ledger & Payment Receipts
+
+### 9.1 Managing Customer Accounts & Credit Limits
+1. Navigate to **Customers (Khata)** in the left sidebar.
+2. View customer directories with mobile numbers, GSTIN, credit limits, and outstanding receivables.
+3. Click **Register Customer** to add an academy, club, school, or regular retail buyer with custom credit terms.
+4. Credit sales generated from the POS counter (unpaid or partially paid invoices) automatically flow into the customer's ledger balance.
+
+### 9.2 Recording Customer Payments
+1. In the Customers table, click **Receive Payment** on any customer with an outstanding balance.
+2. Enter payment amount, payment mode (Cash, UPI, Card, Bank Transfer, Cheque), date, and reference.
+3. (Optional) Allocate the payment against a specific sales invoice. The system prevents over-allocation.
+4. Click **Confirm Payment Receipt**:
+   - The customer's outstanding balance is reduced immediately.
+   - The transaction is recorded in the customer's Khata statement and the unified payments register.
+
+### 9.3 Customer Khata Statement
+1. Click **Khata** on any customer to view their complete statement of accounts.
+2. Review all sales invoices (debits) and payment receipts (credits) arranged chronologically with running balances.
+
+---
+
+## 10. Unified Financial Register (Inflows & Outflows)
+
+1. Navigate to **Payments** in the left sidebar.
+2. View the complete register of all monetary movements:
+   - **Inflows:** POS sales payments and customer account receipts.
+   - **Outflows:** Supplier payouts and bill disbursements.
+3. Filter by Party Type (`Customer` vs `Supplier`), Payment Mode (`Cash`, `UPI`, `Card`, `Bank Transfer`), or search by reference number.
+4. Audit all transactions with verified party name snapshots and receipt numbers.
 

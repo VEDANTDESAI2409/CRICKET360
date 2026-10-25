@@ -108,8 +108,111 @@ export const cancelInvoiceSchema = z.object({
 export const createCustomerSchema = z.object({
   name: z.string().min(2, 'Customer name must be at least 2 characters').max(150),
   phone: z.string().max(30).nullable().optional(),
+  email: z.string().email().max(100).nullable().optional().or(z.literal('')),
   gstin: z.string().max(20).nullable().optional(),
   address: z.string().max(300).nullable().optional(),
   state_code: z.string().max(10).nullable().optional(),
   credit_limit_paise: z.number().int().nonnegative().optional(),
+  notes: z.string().max(500).nullable().optional(),
 });
+
+export const updateCustomerSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(2, 'Customer name must be at least 2 characters').max(150),
+  phone: z.string().max(30).nullable().optional(),
+  email: z.string().email().max(100).nullable().optional().or(z.literal('')),
+  gstin: z.string().max(20).nullable().optional(),
+  address: z.string().max(300).nullable().optional(),
+  state_code: z.string().max(10).nullable().optional(),
+  credit_limit_paise: z.number().int().nonnegative().optional(),
+  notes: z.string().max(500).nullable().optional(),
+  is_active: z.number().int().min(0).max(1).optional(),
+});
+
+export const createSupplierSchema = z.object({
+  name: z.string().min(2, 'Supplier name must be at least 2 characters').max(150),
+  company_name: z.string().max(150).nullable().optional(),
+  phone: z.string().max(30).nullable().optional(),
+  email: z.string().email().max(100).nullable().optional().or(z.literal('')),
+  gstin: z.string().max(20).nullable().optional(),
+  address: z.string().max(300).nullable().optional(),
+  state_code: z.string().max(10).optional(),
+  payment_terms_days: z.number().int().nonnegative().optional(),
+  notes: z.string().max(500).nullable().optional(),
+});
+
+export const updateSupplierSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string().min(2, 'Supplier name must be at least 2 characters').max(150),
+  company_name: z.string().max(150).nullable().optional(),
+  phone: z.string().max(30).nullable().optional(),
+  email: z.string().email().max(100).nullable().optional().or(z.literal('')),
+  gstin: z.string().max(20).nullable().optional(),
+  address: z.string().max(300).nullable().optional(),
+  state_code: z.string().max(10).optional(),
+  payment_terms_days: z.number().int().nonnegative().optional(),
+  notes: z.string().max(500).nullable().optional(),
+  is_active: z.number().int().min(0).max(1).optional(),
+});
+
+export const createPurchaseItemSchema = z.object({
+  product_id: z.number().int().positive(),
+  variant_id: z.number().int().positive().nullable().optional(),
+  quantity: z.number().int().positive('Quantity must be greater than zero'),
+  unit_cost_paise: z.number().int().nonnegative('Unit cost cannot be negative'),
+  tax_rate_percent: z.number().nonnegative(),
+  discount_amount_paise: z.number().int().nonnegative().optional(),
+});
+
+export const createPurchaseSchema = z.object({
+  supplier_id: z.number().int().positive('Supplier selection is required'),
+  supplier_invoice_number: z.string().min(1, 'Supplier invoice number is required').max(100),
+  purchase_date: z.string().min(10).max(10),
+  place_of_supply: z.string().max(10).optional(),
+  is_inter_state: z.boolean().optional(),
+  items: z.array(createPurchaseItemSchema).min(1, 'Purchase must have at least one line item'),
+  discount_amount_paise: z.number().int().nonnegative().optional(),
+  notes: z.string().max(500).optional(),
+  initial_payment: z
+    .object({
+      amount_paise: z.number().int().nonnegative(),
+      payment_mode: z.enum(['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'CHEQUE']),
+      reference_number: z.string().max(100).optional(),
+      notes: z.string().max(500).optional(),
+    })
+    .optional(),
+});
+
+export const createPurchaseReturnItemSchema = z.object({
+  purchase_item_id: z.number().int().positive(),
+  quantity: z.number().int().positive('Return quantity must be greater than zero'),
+});
+
+export const createPurchaseReturnSchema = z.object({
+  purchase_id: z.number().int().positive(),
+  return_date: z.string().min(10).max(10),
+  reason: z.string().min(2, 'Return reason is required').max(300),
+  notes: z.string().max(500).optional(),
+  items: z.array(createPurchaseReturnItemSchema).min(1, 'Must return at least one item'),
+});
+
+export const recordSupplierPaymentSchema = z.object({
+  supplier_id: z.number().int().positive(),
+  purchase_id: z.number().int().positive().nullable().optional(),
+  amount_paise: z.number().int().positive('Payment amount must be greater than zero'),
+  payment_date: z.string().min(10).max(10),
+  payment_mode: z.enum(['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'CHEQUE']),
+  reference_number: z.string().max(100).nullable().optional(),
+  notes: z.string().max(500).nullable().optional(),
+});
+
+export const recordCustomerPaymentSchema = z.object({
+  customer_id: z.number().int().positive(),
+  invoice_id: z.number().int().positive().nullable().optional(),
+  amount_paise: z.number().int().positive('Payment amount must be greater than zero'),
+  payment_date: z.string().min(10).max(10),
+  payment_mode: z.enum(['CASH', 'UPI', 'CARD', 'BANK_TRANSFER', 'CHEQUE']),
+  reference_number: z.string().max(100).nullable().optional(),
+  notes: z.string().max(500).nullable().optional(),
+});
+

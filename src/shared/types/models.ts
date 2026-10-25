@@ -218,24 +218,60 @@ export interface ProductFilterQuery {
 export interface Supplier {
   id: number;
   name: string;
-  company_name?: string;
-  phone?: string;
-  gstin?: string;
+  company_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  gstin?: string | null;
+  address?: string | null;
+  state_code?: string;
+  payment_terms_days: number;
+  notes?: string | null;
   balance_paise: number;
   is_active: number;
+  created_at?: string;
+  updated_at?: string | null;
+}
+
+export interface CreateSupplierInput {
+  name: string;
+  company_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  gstin?: string | null;
+  address?: string | null;
+  state_code?: string;
+  payment_terms_days?: number;
+  notes?: string | null;
+}
+
+export interface UpdateSupplierInput {
+  id: number;
+  name: string;
+  company_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  gstin?: string | null;
+  address?: string | null;
+  state_code?: string;
+  payment_terms_days?: number;
+  notes?: string | null;
+  is_active?: number;
 }
 
 export interface Customer {
   id: number;
   name: string;
   phone?: string | null;
+  email?: string | null;
   gstin?: string | null;
   address?: string | null;
   state_code?: string | null;
   credit_limit_paise?: number;
+  notes?: string | null;
   balance_paise: number;
   is_active: number;
   created_at?: string;
+  updated_at?: string | null;
 }
 
 export type PaymentMode = 'CASH' | 'UPI' | 'CARD' | 'BANK_TRANSFER' | 'CHEQUE';
@@ -266,13 +302,25 @@ export interface SalesInvoiceItem {
   created_at: string;
 }
 
+export type PaymentType =
+  | 'INVOICE_PAYMENT'
+  | 'PURCHASE_PAYMENT'
+  | 'CUSTOMER_RECEIPT'
+  | 'SUPPLIER_PAYOUT'
+  | 'REFUND';
+
 export interface PaymentRecord {
   id: number;
   payment_number: string;
   payment_date: string;
   party_type: 'CUSTOMER' | 'SUPPLIER';
   party_id: number;
+  party_name?: string;
   invoice_id?: number | null;
+  invoice_number?: string | null;
+  purchase_id?: number | null;
+  purchase_number?: string | null;
+  payment_type?: PaymentType;
   amount_paise: number;
   payment_mode: PaymentMode;
   reference_number?: string | null;
@@ -280,6 +328,8 @@ export interface PaymentRecord {
   user_id?: number | null;
   created_at: string;
 }
+
+export type Payment = PaymentRecord;
 
 export interface SalesInvoice {
   id: number;
@@ -349,13 +399,208 @@ export interface InvoiceFilterQuery {
   offset?: number;
 }
 
+export interface PurchaseItem {
+  id: number;
+  purchase_id: number;
+  product_id: number;
+  variant_id?: number | null;
+  product_name_snapshot: string;
+  variant_name_snapshot?: string | null;
+  sku_snapshot: string;
+  barcode_snapshot?: string | null;
+  hsn_code_snapshot: string;
+  unit_snapshot: string;
+  quantity: number;
+  unit_cost_paise: number;
+  discount_amount_paise: number;
+  taxable_amount_paise: number;
+  tax_rate_percent: number;
+  cgst_amount_paise: number;
+  sgst_amount_paise: number;
+  igst_amount_paise: number;
+  total_amount_paise: number;
+  returned_quantity: number;
+  created_at: string;
+}
+
+export interface Purchase {
+  id: number;
+  purchase_number: string;
+  supplier_invoice_number: string;
+  supplier_id: number;
+  supplier_name_snapshot?: string | null;
+  supplier_gstin_snapshot?: string | null;
+  purchase_date: string;
+  place_of_supply: string;
+  is_inter_state: number;
+  taxable_amount_paise: number;
+  cgst_amount_paise: number;
+  sgst_amount_paise: number;
+  igst_amount_paise: number;
+  total_tax_paise: number;
+  subtotal_paise: number;
+  discount_amount_paise: number;
+  round_off_paise: number;
+  total_amount_paise: number;
+  paid_amount_paise: number;
+  balance_amount_paise: number;
+  payment_status: PaymentStatus;
+  status: 'RECEIVED' | 'CANCELLED';
+  notes?: string | null;
+  user_id?: number | null;
+  created_at: string;
+  items?: PurchaseItem[];
+  payments?: PaymentRecord[];
+  supplier_name?: string;
+}
+
+export interface CreatePurchaseItemInput {
+  product_id: number;
+  variant_id?: number | null;
+  quantity: number;
+  unit_cost_paise: number;
+  tax_rate_percent: number;
+  discount_amount_paise?: number;
+}
+
+export interface CreatePurchaseInput {
+  supplier_id: number;
+  supplier_invoice_number: string;
+  purchase_date: string;
+  place_of_supply?: string;
+  is_inter_state?: boolean;
+  items: CreatePurchaseItemInput[];
+  discount_amount_paise?: number;
+  notes?: string;
+  initial_payment?: {
+    amount_paise: number;
+    payment_mode: PaymentMode;
+    reference_number?: string;
+    notes?: string;
+  };
+}
+
+export interface PurchaseReturnItem {
+  id: number;
+  purchase_return_id: number;
+  purchase_item_id: number;
+  product_id: number;
+  variant_id?: number | null;
+  product_name?: string;
+  quantity: number;
+  unit_cost_paise: number;
+  tax_rate_percent: number;
+  taxable_amount_paise: number;
+  total_amount_paise: number;
+  created_at: string;
+}
+
+export interface PurchaseReturn {
+  id: number;
+  return_number: string;
+  purchase_id: number;
+  supplier_id: number;
+  supplier_name?: string;
+  purchase_number?: string;
+  return_date: string;
+  taxable_amount_paise: number;
+  total_tax_paise: number;
+  grand_total_paise: number;
+  reason: string;
+  notes?: string | null;
+  user_id?: number | null;
+  created_at: string;
+  items?: PurchaseReturnItem[];
+}
+
+export interface CreatePurchaseReturnItemInput {
+  purchase_item_id: number;
+  quantity: number;
+}
+
+export interface CreatePurchaseReturnInput {
+  purchase_id: number;
+  return_date: string;
+  reason: string;
+  notes?: string;
+  items: CreatePurchaseReturnItemInput[];
+}
+
+export interface RecordSupplierPaymentInput {
+  supplier_id: number;
+  purchase_id?: number | null;
+  amount_paise: number;
+  payment_date: string;
+  payment_mode: PaymentMode;
+  reference_number?: string | null;
+  notes?: string | null;
+}
+
+export interface RecordCustomerPaymentInput {
+  customer_id: number;
+  invoice_id?: number | null;
+  amount_paise: number;
+  payment_date: string;
+  payment_mode: PaymentMode;
+  reference_number?: string | null;
+  notes?: string | null;
+}
+
+export interface LedgerEntry {
+  id: string;
+  date: string;
+  type: 'INVOICE' | 'PURCHASE' | 'PAYMENT' | 'RETURN' | 'ADJUSTMENT';
+  reference_number: string;
+  description: string;
+  debit_paise: number;
+  credit_paise: number;
+  running_balance_paise: number;
+}
+
+export interface CustomerStatement {
+  customer: Customer;
+  totalSalesPaise: number;
+  totalPaidPaise: number;
+  outstandingBalancePaise: number;
+  invoices: SalesInvoice[];
+  payments: PaymentRecord[];
+  entries: LedgerEntry[];
+}
+
+export interface SupplierStatement {
+  supplier: Supplier;
+  totalPurchasesPaise: number;
+  totalPaidPaise: number;
+  totalReturnsPaise: number;
+  outstandingBalancePaise: number;
+  purchases: Purchase[];
+  payments: PaymentRecord[];
+  returns: PurchaseReturn[];
+  entries: LedgerEntry[];
+}
+
 export interface CreateCustomerInput {
   name: string;
   phone?: string | null;
+  email?: string | null;
   gstin?: string | null;
   address?: string | null;
   state_code?: string | null;
   credit_limit_paise?: number;
+  notes?: string | null;
+}
+
+export interface UpdateCustomerInput {
+  id: number;
+  name: string;
+  phone?: string | null;
+  email?: string | null;
+  gstin?: string | null;
+  address?: string | null;
+  state_code?: string | null;
+  credit_limit_paise?: number;
+  notes?: string | null;
+  is_active?: number;
 }
 
 export interface User {

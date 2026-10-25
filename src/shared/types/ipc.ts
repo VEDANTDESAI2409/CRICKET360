@@ -24,6 +24,21 @@ import {
   InvoiceFilterQuery,
   Customer,
   CreateCustomerInput,
+  UpdateCustomerInput,
+  CustomerStatement,
+  Supplier,
+  CreateSupplierInput,
+  UpdateSupplierInput,
+  SupplierStatement,
+  Purchase,
+  CreatePurchaseInput,
+  PurchaseReturn,
+  CreatePurchaseReturnInput,
+  PaymentRecord,
+  PaymentMode,
+  PaymentType,
+  RecordSupplierPaymentInput,
+  RecordCustomerPaymentInput,
 } from './models';
 
 export type IpcResult<T> =
@@ -94,7 +109,43 @@ export interface IpcApi {
   };
   customers: {
     search: (query?: string) => Promise<IpcResult<Customer[]>>;
+    getById: (id: number) => Promise<IpcResult<Customer | null>>;
     create: (data: CreateCustomerInput) => Promise<IpcResult<Customer>>;
+    update: (data: UpdateCustomerInput) => Promise<IpcResult<Customer>>;
+    getLedger: (id: number) => Promise<IpcResult<CustomerStatement>>;
+  };
+  suppliers: {
+    getAll: (search?: string) => Promise<IpcResult<Supplier[]>>;
+    getById: (id: number) => Promise<IpcResult<Supplier | null>>;
+    create: (data: CreateSupplierInput) => Promise<IpcResult<Supplier>>;
+    update: (data: UpdateSupplierInput) => Promise<IpcResult<Supplier>>;
+    getLedger: (id: number) => Promise<IpcResult<SupplierStatement>>;
+  };
+  purchases: {
+    getAll: (filters?: {
+      supplier_id?: number;
+      search?: string;
+      status?: string;
+      payment_status?: string;
+      limit?: number;
+      offset?: number;
+    }) => Promise<IpcResult<Purchase[]>>;
+    getById: (id: number) => Promise<IpcResult<Purchase | null>>;
+    create: (data: CreatePurchaseInput) => Promise<IpcResult<Purchase>>;
+    createReturn: (data: CreatePurchaseReturnInput) => Promise<IpcResult<PurchaseReturn>>;
+    getNextNumber: () => Promise<IpcResult<string>>;
+  };
+  payments: {
+    getAll: (filters?: {
+      party_type?: 'CUSTOMER' | 'SUPPLIER';
+      party_id?: number;
+      payment_mode?: PaymentMode;
+      payment_type?: PaymentType;
+      limit?: number;
+      offset?: number;
+    }) => Promise<IpcResult<PaymentRecord[]>>;
+    recordSupplierPayment: (data: RecordSupplierPaymentInput) => Promise<IpcResult<PaymentRecord>>;
+    recordCustomerPayment: (data: RecordCustomerPaymentInput) => Promise<IpcResult<PaymentRecord>>;
   };
 }
 

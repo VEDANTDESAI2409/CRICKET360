@@ -10,6 +10,13 @@ import {
   CreateInvoiceInput,
   InvoiceFilterQuery,
   CreateCustomerInput,
+  UpdateCustomerInput,
+  CreateSupplierInput,
+  UpdateSupplierInput,
+  CreatePurchaseInput,
+  CreatePurchaseReturnInput,
+  RecordSupplierPaymentInput,
+  RecordCustomerPaymentInput,
 } from '../../shared/types/models';
 import { IpcResult } from '../../shared/types/ipc';
 import * as productRepo from '../db/productRepo';
@@ -17,6 +24,9 @@ import * as inventoryRepo from '../db/inventoryRepo';
 import * as mastersRepo from '../db/mastersRepo';
 import * as dashboardRepo from '../db/dashboardRepo';
 import { BillingRepo } from '../db/billingRepo';
+import { SupplierRepo } from '../db/supplierRepo';
+import { PurchaseRepo } from '../db/purchaseRepo';
+import { AccountRepo } from '../db/accountRepo';
 import {
   settingKeySchema,
   setSettingSchema,
@@ -26,6 +36,13 @@ import {
   createInvoiceSchema,
   cancelInvoiceSchema,
   createCustomerSchema,
+  updateCustomerSchema,
+  createSupplierSchema,
+  updateSupplierSchema,
+  createPurchaseSchema,
+  createPurchaseReturnSchema,
+  recordSupplierPaymentSchema,
+  recordCustomerPaymentSchema,
 } from './schemas';
 
 export function registerIpcHandlers(): void {
@@ -424,9 +441,20 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('customers:search', async (_event, query?: string) => {
     try {
       const db = getDatabase();
-      const repo = new BillingRepo(db);
-      const customers = repo.getCustomers(query ? String(query) : undefined);
+      const repo = new AccountRepo(db);
+      const customers = repo.searchCustomers(query ? String(query) : undefined);
       return { success: true, data: customers };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('customers:getById', async (_event, id: number) => {
+    try {
+      const db = getDatabase();
+      const repo = new AccountRepo(db);
+      const customer = repo.getCustomerById(Number(id));
+      return { success: true, data: customer };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
@@ -436,9 +464,184 @@ export function registerIpcHandlers(): void {
     try {
       const validated = createCustomerSchema.parse(rawData);
       const db = getDatabase();
-      const repo = new BillingRepo(db);
+      const repo = new AccountRepo(db);
       const customer = repo.createCustomer(validated as CreateCustomerInput);
       return { success: true, data: customer };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('customers:update', async (_event, rawData: unknown) => {
+    try {
+      const validated = updateCustomerSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new AccountRepo(db);
+      const customer = repo.updateCustomer(validated as UpdateCustomerInput);
+      return { success: true, data: customer };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('customers:getLedger', async (_event, id: number) => {
+    try {
+      const db = getDatabase();
+      const repo = new AccountRepo(db);
+      const statement = repo.getCustomerLedger(Number(id));
+      return { success: true, data: statement };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // 11. Supplier Handlers
+  ipcMain.handle('suppliers:getAll', async (_event, search?: string) => {
+    try {
+      const db = getDatabase();
+      const repo = new SupplierRepo(db);
+      const suppliers = repo.getAll(search ? String(search) : undefined);
+      return { success: true, data: suppliers };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('suppliers:getById', async (_event, id: number) => {
+    try {
+      const db = getDatabase();
+      const repo = new SupplierRepo(db);
+      const supplier = repo.getById(Number(id));
+      return { success: true, data: supplier };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('suppliers:create', async (_event, rawData: unknown) => {
+    try {
+      const validated = createSupplierSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new SupplierRepo(db);
+      const supplier = repo.create(validated as CreateSupplierInput);
+      return { success: true, data: supplier };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('suppliers:update', async (_event, rawData: unknown) => {
+    try {
+      const validated = updateSupplierSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new SupplierRepo(db);
+      const supplier = repo.update(validated as UpdateSupplierInput);
+      return { success: true, data: supplier };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('suppliers:getLedger', async (_event, id: number) => {
+    try {
+      const db = getDatabase();
+      const repo = new SupplierRepo(db);
+      const statement = repo.getLedger(Number(id));
+      return { success: true, data: statement };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // 12. Purchase & Return Handlers
+  ipcMain.handle('purchases:getAll', async (_event, filters?: any) => {
+    try {
+      const db = getDatabase();
+      const repo = new PurchaseRepo(db);
+      const purchases = repo.getAll(filters);
+      return { success: true, data: purchases };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('purchases:getById', async (_event, id: number) => {
+    try {
+      const db = getDatabase();
+      const repo = new PurchaseRepo(db);
+      const purchase = repo.getById(Number(id));
+      return { success: true, data: purchase };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('purchases:create', async (_event, rawData: unknown) => {
+    try {
+      const validated = createPurchaseSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new PurchaseRepo(db);
+      const purchase = repo.createPurchase(validated as CreatePurchaseInput);
+      return { success: true, data: purchase };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('purchases:createReturn', async (_event, rawData: unknown) => {
+    try {
+      const validated = createPurchaseReturnSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new PurchaseRepo(db);
+      const ret = repo.createReturn(validated as CreatePurchaseReturnInput);
+      return { success: true, data: ret };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('purchases:getNextNumber', async () => {
+    try {
+      const db = getDatabase();
+      const repo = new PurchaseRepo(db);
+      const nextNum = repo.getNextPurchaseNumber();
+      return { success: true, data: nextNum };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // 13. Payment Handlers
+  ipcMain.handle('payments:getAll', async (_event, filters?: any) => {
+    try {
+      const db = getDatabase();
+      const repo = new AccountRepo(db);
+      const payments = repo.getAllPayments(filters);
+      return { success: true, data: payments };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('payments:recordSupplierPayment', async (_event, rawData: unknown) => {
+    try {
+      const validated = recordSupplierPaymentSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new AccountRepo(db);
+      const payment = repo.recordSupplierPayment(validated as RecordSupplierPaymentInput);
+      return { success: true, data: payment };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('payments:recordCustomerPayment', async (_event, rawData: unknown) => {
+    try {
+      const validated = recordCustomerPaymentSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new AccountRepo(db);
+      const payment = repo.recordCustomerPayment(validated as RecordCustomerPaymentInput);
+      return { success: true, data: payment };
     } catch (err) {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }

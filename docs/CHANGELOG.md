@@ -4,6 +4,35 @@ All notable changes to the Cricket360 project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-m5] - 2026-10-25
+### Added - Combined Milestone 5: Procurement, Supplier Management & Customer Accounts
+- **Phase A: Suppliers & Procurement Module (`Suppliers.tsx`, `Purchases.tsx`):**
+  - Supplier directory with real-time search, KPI cards (Total Suppliers, Accounts Payable, Avg Payment Terms, GST Registered), Add/Edit vendor modal, and payment terms tracking.
+  - Inward Goods & Purchase Invoice creation modal with supplier invoice number/date, item builder, variant selection, unit cost, discount, and real-time GST computation.
+  - B2B procurement tax engine (`calculatePurchaseTotals`): tax-exclusive purchase rate computation, intra-state CGST+SGST split, inter-state IGST allocation, and round-off calculation in integer paise.
+  - Duplicate supplier invoice validation scoped to `(supplier_id, supplier_invoice_number)` enforced via unique SQLite index `uq_supplier_invoice` and transactional pre-check.
+  - Transaction-safe receipt of goods: updates warehouse stock on variants and parent products, logs auditable `stock_movements` with `movement_type = 'PURCHASE_RECEIPT'`, and adjusts supplier ledger balance.
+  - Purchase history table with date/status filters, Purchase Details modal with tax breakdowns, and Bill Payment action modal.
+  - Purchase Returns workflow with returnable quantity bounds checks, warehouse stock deduction with `PURCHASE_RETURN` movements, and vendor account balance credit.
+- **Phase B: Supplier Payments & Customer Accounts (`Customers.tsx`, `PaymentsRegister.tsx`):**
+  - Customer directory with search, credit limit management, receivables KPI cards, Add/Edit customer modal, and customer transaction history.
+  - Support for customer credit balances generated during POS transactions when payment is deferred or partially tendered.
+  - Full and partial customer payments recorded against outstanding sales invoices with over-allocation prevention.
+  - Full and partial supplier payments recorded against outstanding purchase bills with over-allocation prevention.
+  - Chronological Customer Khata statement modal and Supplier Ledger modal displaying debit/credit entries with verified running balance.
+  - Unified Payments Register (`PaymentsRegister.tsx`) tracking all inflow (sales, receipts) and outflow (supplier payouts) with party and mode filters.
+- **Phase C: Financial Integrity & Migrations:**
+  - Database Migration `005_procurement_and_accounts.sql`: enhanced `suppliers`, `customers`, `purchases`, and `payments` tables, created `purchase_items`, `purchase_returns`, `purchase_return_items`, and sequence numbering keys.
+  - 100% integer paise arithmetic across all purchase tax, line totals, discounts, payments, and running ledger balances.
+  - All financial state modifications guarded by synchronous SQLite transactions (`db.transaction()`).
+- **Sidebar & Navigation Integration:**
+  - Activated `Purchases`, `Customers`, `Suppliers`, and `Payments` navigation items in `Sidebar.tsx`.
+  - Routed all 4 new modules to dedicated screens in `App.tsx`.
+- **Testing & Verification:**
+  - 27 new tests added (5 in `purchaseRepo.test.ts`, 5 in `accountRepo.test.ts`, 7 in `procurementValidation.test.ts`, 3 in `Suppliers.test.tsx`, 3 in `Customers.test.tsx`, 4 in `Purchases.test.tsx`).
+  - Total automated test suite expanded to 99 passing tests across 18 test files.
+  - Verified with `npm run typecheck` (0 errors), `npm test` (99/99 pass), `npm run build` (clean Vite + Electron bundles), and `npm run smoke-test` (migrations 001–005 applied cleanly).
+
 ## [1.0.0-m4] - 2026-10-25
 ### Fixed - Optional Customer Details & IPC Validation
 - **Customer GSTIN & Address Nullability:** Resolved IPC validation errors (`customer_gstin: expected string, received null`, `customer_address: expected string, received null`) when billing walk-in customers or customers without registered GST/address.

@@ -18,24 +18,30 @@ The test suite runs under Vitest using in-memory SQLite and React Testing Librar
 tests/
 ├── unit/
 │   ├── db/
-│   │   ├── sqlite-foundation.test.ts   # 6 tests: WAL mode, foreign keys, atomic migration rollback
-│   │   ├── dashboardRepo.test.ts       # 6 tests: Aggregate queries, cancellations exclusion, date boundaries
-│   │   ├── productRepo.test.ts         # 8 tests: CRUD, variants, transactions, safe deletion, unique SKU/barcodes
-│   │   ├── inventoryRepo.test.ts       # 5 tests: Adjustments, variance, ledger audit trail, variant rollup
-│   │   └── billingRepo.test.ts         # 10 tests: Sequential numbering, atomic sale, stock deduction, walk-in/registered snapshots, cancellation
+│   │   ├── sqlite-foundation.test.ts       # 6 tests: WAL mode, foreign keys, atomic migration rollback
+│   │   ├── dashboardRepo.test.ts           # 6 tests: Aggregate queries, cancellations exclusion, date boundaries
+│   │   ├── productRepo.test.ts             # 8 tests: CRUD, variants, transactions, safe deletion, unique SKU/barcodes
+│   │   ├── inventoryRepo.test.ts           # 5 tests: Adjustments, variance, ledger audit trail, variant rollup
+│   │   ├── billingRepo.test.ts             # 10 tests: Sequential numbering, atomic sale, stock deduction, walk-in/registered snapshots, cancellation
+│   │   ├── purchaseRepo.test.ts            # 5 tests: Inward receipts, duplicate invoice prevention, tax calculation, purchase returns & stock restitution
+│   │   └── accountRepo.test.ts             # 5 tests: Customer Khata, supplier ledger, partial payments, payment allocation & balance invariants
 │   ├── ipc/
-│   │   └── validation.test.ts          # 8 tests: Zod IPC boundary validation for billing, null walk-in customer fields, settings
+│   │   ├── validation.test.ts              # 8 tests: Zod IPC boundary validation for billing, null walk-in customer fields, settings
+│   │   └── procurementValidation.test.ts   # 7 tests: Zod IPC validation for suppliers, purchases, returns, customer/supplier payments
 │   └── utils/
-│       └── billingMath.test.ts         # 6 tests: Integer paise tax math, intra/inter-state split, rounding, discounts, words
+│       └── billingMath.test.ts             # 6 tests: Integer paise tax math, intra/inter-state split, rounding, discounts, words
 └── components/
-    ├── UiShell.test.tsx                # 6 tests: Button, Card, Badge, Sidebar, Header
-    ├── Dashboard.test.tsx              # 5 tests: MetricCard, SearchInput, Table sorting/empty, BarChart, ProgressDonut
-    ├── ProductCatalog.test.tsx         # 4 tests: Rendering, search filter, auto SKU generation/creation, view details modal
-    ├── InventoryManagement.test.tsx    # 3 tests: Summary metrics, audit trail tab, physical stock adjustment & variance calculation
-    └── PosBilling.test.tsx             # 5 tests: Register rendering, search & cart addition, stock limits, inter-state IGST, sale completion & print modal
+    ├── UiShell.test.tsx                    # 6 tests: Button, Card, Badge, Sidebar, Header
+    ├── Dashboard.test.tsx                  # 5 tests: MetricCard, SearchInput, Table sorting/empty, BarChart, ProgressDonut
+    ├── ProductCatalog.test.tsx             # 4 tests: Rendering, search filter, auto SKU generation/creation, view details modal
+    ├── InventoryManagement.test.tsx        # 3 tests: Summary metrics, audit trail tab, physical stock adjustment & variance calculation
+    ├── PosBilling.test.tsx                 # 5 tests: Register rendering, search & cart addition, stock limits, inter-state IGST, sale completion & print modal
+    ├── Suppliers.test.tsx                  # 3 tests: Supplier directory, KPI metrics, Add Supplier modal, Vendor Khata running balance
+    ├── Customers.test.tsx                  # 3 tests: Customer directory, KPI metrics, Register Customer modal, Customer Khata statement
+    └── Purchases.test.tsx                  # 4 tests: Purchases directory, Inward Goods modal with builder cart, View details, Pay bill modal
 ```
 
-**Total Active Test Count:** 72 automated tests passing across 12 test files with zero regressions.
+**Total Active Test Count:** 99 automated tests passing across 18 test files with zero regressions.
 
 ### Key Milestone 4 Test Cases:
 - **`billingMath.test.ts`:**

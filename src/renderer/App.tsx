@@ -5,6 +5,10 @@ import { Dashboard } from './features/dashboard/Dashboard';
 import { ProductCatalog } from './features/products/ProductCatalog';
 import { InventoryManagement } from './features/inventory/InventoryManagement';
 import { PosBilling } from './features/billing/PosBilling';
+import { Purchases } from './features/purchases/Purchases';
+import { Suppliers } from './features/suppliers/Suppliers';
+import { Customers } from './features/customers/Customers';
+import { PaymentsRegister } from './features/payments/PaymentsRegister';
 import { Card } from './components/Card';
 import { Button } from './components/Button';
 import {
@@ -252,6 +256,14 @@ export const App: React.FC = () => {
               onNavigateToModule={setCurrentModule}
               initialSelectedProduct={productForAdjustment}
             />
+          ) : currentModule === 'purchases' ? (
+            <Purchases />
+          ) : currentModule === 'suppliers' ? (
+            <Suppliers />
+          ) : currentModule === 'customers' ? (
+            <Customers />
+          ) : currentModule === 'payments' ? (
+            <PaymentsRegister />
           ) : currentModule === 'settings' ? (
             /* Settings Panel */
             <div className="max-w-4xl mx-auto space-y-6">

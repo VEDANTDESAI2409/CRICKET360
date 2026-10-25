@@ -56,7 +56,29 @@ const api: IpcApi = {
   },
   customers: {
     search: (query) => ipcRenderer.invoke('customers:search', query),
+    getById: (id) => ipcRenderer.invoke('customers:getById', id),
     create: (data) => ipcRenderer.invoke('customers:create', data),
+    update: (data) => ipcRenderer.invoke('customers:update', data),
+    getLedger: (id) => ipcRenderer.invoke('customers:getLedger', id),
+  },
+  suppliers: {
+    getAll: (search) => ipcRenderer.invoke('suppliers:getAll', search),
+    getById: (id) => ipcRenderer.invoke('suppliers:getById', id),
+    create: (data) => ipcRenderer.invoke('suppliers:create', data),
+    update: (data) => ipcRenderer.invoke('suppliers:update', data),
+    getLedger: (id) => ipcRenderer.invoke('suppliers:getLedger', id),
+  },
+  purchases: {
+    getAll: (filters) => ipcRenderer.invoke('purchases:getAll', filters),
+    getById: (id) => ipcRenderer.invoke('purchases:getById', id),
+    create: (data) => ipcRenderer.invoke('purchases:create', data),
+    createReturn: (data) => ipcRenderer.invoke('purchases:createReturn', data),
+    getNextNumber: () => ipcRenderer.invoke('purchases:getNextNumber'),
+  },
+  payments: {
+    getAll: (filters) => ipcRenderer.invoke('payments:getAll', filters),
+    recordSupplierPayment: (data) => ipcRenderer.invoke('payments:recordSupplierPayment', data),
+    recordCustomerPayment: (data) => ipcRenderer.invoke('payments:recordCustomerPayment', data),
   },
 };
 

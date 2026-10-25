@@ -1,5 +1,34 @@
 # Cricket360: Development Work Log
 
+## Log Entry: 2026-10-25 - Combined Milestone 5: Procurement, Supplier Management & Customer Accounts
+
+### Summary of Work Completed
+- **Phase A — Suppliers and Procurement:**
+  - Implemented `SupplierRepo` (`src/main/db/supplierRepo.ts`): Supplier CRUD, search, active toggling, and running vendor ledger statement with debits, credits, and running balance calculation.
+  - Implemented `PurchaseRepo` (`src/main/db/purchaseRepo.ts`): Purchase sequence generation (`PUR-`), transaction-safe purchase bill creation, duplicate supplier invoice prevention, inward stock increments, immutable `stock_movements` with `movement_type = 'PURCHASE_RECEIPT'`, and purchase returns with quantity limits and stock restitution.
+  - B2B tax math helper (`src/shared/utils/billingMath.ts`): Tax-exclusive unit rates, intra-state CGST + SGST split, inter-state IGST, and nearest Rupee rounding in integer paise.
+  - Created Supplier Management interface (`src/renderer/features/suppliers/Suppliers.tsx`) with search, KPI summary cards, Add/Edit modal, and Vendor Ledger statement.
+  - Created Inward Procurement interface (`src/renderer/features/purchases/Purchases.tsx`) with bill creation modal, product/variant item builder, live GST calculation, initial tender recording, purchase details modal, purchase return modal, and pay bill modal.
+- **Phase B — Supplier Payments and Customer Accounts:**
+  - Implemented `AccountRepo` (`src/main/db/accountRepo.ts`): Customer CRUD, Khata ledger generation, customer payment receipts with invoice allocation, supplier payouts with purchase bill allocation, and unified payment register query.
+  - Customer Accounts interface (`src/renderer/features/customers/Customers.tsx`) with customer directory, credit limit tracking, Add/Edit customer modal, and Customer Khata statement with running balances.
+  - Unified Payments Register (`src/renderer/features/payments/PaymentsRegister.tsx`) tracking all inflow (sales, customer receipts) and outflow (supplier payouts) with party, mode, and date filters.
+- **Phase C — Financial Integrity:**
+  - Database Migration `005_procurement_and_accounts.sql`: Added `payment_terms_days` to `suppliers`, `credit_limit_paise` to `customers`, subtotal/discount/round-off to `purchases`, unique index `uq_supplier_invoice ON purchases(supplier_id, supplier_invoice_number)`, and created `purchase_items`, `purchase_returns`, `purchase_return_items`.
+  - Enforced 100% integer paise precision across all purchase rates, line totals, taxes, payments, and running ledger entries.
+  - Guarded all balance updates and stock mutations inside synchronous SQLite transactions (`db.transaction()`).
+  - Implemented Zod boundary validation schemas (`src/main/ipc/schemas.ts`) for all new customer, supplier, purchase, return, and payment IPC requests.
+- **Navigation Integration:**
+  - Updated `src/renderer/components/Sidebar.tsx` to mark `Purchases`, `Customers`, `Suppliers`, and `Payments` as active navigation items.
+  - Routed all 4 new modules in `src/renderer/App.tsx`.
+- **Verification & Test Results:**
+  - `npm run typecheck` (`tsc --noEmit`): 0 errors.
+  - `npm test` (`vitest run`): 99 tests passing across 18 test files (27 new tests added).
+  - `npm run build`: Production renderer bundle (Vite) and Electron bundles (esbuild) built cleanly.
+  - `npm run smoke-test`: Electron application launched and verified with 5 active database migrations.
+
+---
+
 ## Log Entry: 2026-10-25 - Fix: Handle Optional Customer Details in POS Billing
 
 ### Summary of Root Cause & Fix

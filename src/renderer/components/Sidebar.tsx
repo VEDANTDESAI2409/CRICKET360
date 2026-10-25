@@ -58,10 +58,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'billing', label: 'POS Billing', icon: <Receipt size={18} />, badge: 'F2', status: 'active', section: 'menu' },
     { id: 'products', label: 'Products & Catalog', icon: <Package size={18} />, status: 'active', section: 'menu' },
     { id: 'inventory', label: 'Inventory & Stock', icon: <Boxes size={18} />, badge: lowStockCount > 0 ? `${lowStockCount}` : undefined, status: 'active', section: 'menu' },
-    { id: 'purchases', label: 'Purchases', icon: <ShoppingCart size={18} />, status: 'planned', section: 'menu' },
-    { id: 'customers', label: 'Customers (Khata)', icon: <Users size={18} />, status: 'planned', section: 'menu' },
-    { id: 'suppliers', label: 'Suppliers', icon: <Building2 size={18} />, status: 'planned', section: 'menu' },
-    { id: 'payments', label: 'Payments', icon: <CreditCard size={18} />, status: 'planned', section: 'menu' },
+    { id: 'purchases', label: 'Purchases', icon: <ShoppingCart size={18} />, status: 'active', section: 'menu' },
+    { id: 'customers', label: 'Customers (Khata)', icon: <Users size={18} />, status: 'active', section: 'menu' },
+    { id: 'suppliers', label: 'Suppliers', icon: <Building2 size={18} />, status: 'active', section: 'menu' },
+    { id: 'payments', label: 'Payments', icon: <CreditCard size={18} />, status: 'active', section: 'menu' },
     { id: 'returns', label: 'Returns & Refunds', icon: <RotateCcw size={18} />, status: 'planned', section: 'menu' },
 
     // General (Analytics & settings)

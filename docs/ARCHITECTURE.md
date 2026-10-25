@@ -103,12 +103,12 @@ The IPC layer is organized into modular channels:
 - `billing:cancelInvoice` - Audit-safe invoice voiding workflow restoring variant and parent product stock with compensatory `SALE_RETURN` movements.
 - `billing:getNextInvoiceNumber` - Atomic generation of collision-free sequential invoice numbers (e.g. `CR360-1001`).
 - `billing:getShopSettings` - Shop profile snapshot for tax invoice headers and GSTIN/State verification.
-- `customers:search` - Customer lookup by name, phone, or GSTIN with walk-in option.
-- `customers:create` - Quick customer creation modal during billing checkout.
-- `db:purchases:*` - Purchase bill entry, supplier returns (Milestone 5).
-- `db:parties:*` - Supplier directories, credit ledgers (Milestone 5 / 7).
+- `customers:getAll` / `customers:getById` / `customers:create` / `customers:update` / `customers:getKhata` - Customer directory, credit management, and running Khata statement.
+- `suppliers:getAll` / `suppliers:getById` / `suppliers:create` / `suppliers:update` / `suppliers:getLedger` - Supplier directory, payment terms, and vendor running ledger.
+- `purchases:getAll` / `purchases:getById` / `purchases:create` / `purchases:createReturn` - Purchase bills inwarding, tax breakdown, duplicate supplier invoice validation, and purchase returns.
+- `payments:recordCustomerPayment` / `payments:recordSupplierPayment` / `payments:getAll` - Full/partial payment recording against sales/purchase invoices, balance adjustments, and unified payment register.
 - `db:reports:*` - GST summaries, sales reports, inventory valuations (Milestone 8).
-- `system:print:*` - Silent printing to thermal or default printer, A4 print preview (Milestone 4 / 6).
+- `system:print:*` - Silent printing to thermal or default printer, A4 print preview.
 - `system:backup:*` - Manual backup generation, database restore, integrity checks (Milestone 9).
 
 ### 4.1 Transactional Guarantees for Billing, Catalog & Stock Operations
@@ -136,6 +136,25 @@ All stock mutations and billing workflows execute within synchronous `db.transac
 4. **Variant Stock Rollup:** Updating stock for any product variant immediately recalculates and updates the parent product's cumulative `stock_quantity`.
 5. **Safe Product Deletion Guard:** Products associated with historical `SALE_INVOICE` or `PURCHASE_RECEIPT` movements cannot be permanently deleted; the repository raises an explicit error advising deactivation instead.
 6. **Reason-Enforced Adjustments:** Adjustments mandate a valid reason code (`PHYSICAL_AUDIT_MISMATCH`, `DAMAGED_IN_STORE`, `EXPIRED_DEFECTIVE`, `SAMPLE_DEMO`, `THEFT_OR_LOSS`, `FOUND_SURPLUS`, `OTHER`) recorded both in `stock_adjustments` and `stock_movements`.
+
+### 4.2 Procurement & Financial Account Invariants (Combined Milestone 5)
+1. **B2B Procurement Tax Computation:**
+   - Unit purchase rates are tax-exclusive: `Taxable Value = Quantity * Unit Cost - Discount`.
+   - Intra-state procurement splits GST equally into CGST and SGST (`cgst_amount_paise = Math.floor(tax / 2)`, `sgst_amount_paise = tax - cgst`).
+   - Inter-state procurement applies 100% to IGST (`igst_amount_paise = tax`).
+2. **Duplicate Supplier Invoice Validation:**
+   - Scoped strictly to `(supplier_id, supplier_invoice_number)`.
+   - Enforced both at the database level via unique index `uq_supplier_invoice ON purchases(supplier_id, supplier_invoice_number)` and pre-checked in `PurchaseRepo.createPurchase` with clean business error reporting.
+3. **Inward Stock Receipts:**
+   - Every purchase bill inward creation executes in an atomic transaction: inserting `purchases`, inserting `purchase_items`, updating `stock_quantity` on both variants and parent products, inserting immutable `stock_movements` with `movement_type = 'PURCHASE_RECEIPT'`, recording any initial payment, and updating the supplier's balance in `suppliers`.
+4. **Purchase Returns:**
+   - Enforces quantity constraints: returned quantity cannot exceed `(item.quantity - item.returned_quantity)`.
+   - Atomically decrements warehouse stock, logs compensatory `stock_movements` with `movement_type = 'PURCHASE_RETURN'`, increments `returned_quantity` on the item, and credits the supplier's account balance (`supplier.balance_paise -= return_total`).
+5. **Payment Allocation & Ledger Balance Invariants:**
+   - Supplier payouts prevent over-allocation: payment amount cannot exceed the bill's current `balance_amount_paise`.
+   - Customer payment receipts prevent over-allocation against designated sales invoices and correctly decrement the customer's `balance_paise`.
+   - Full audit trail: posted payments are immutable and recorded in a unified register (`payments` table with `payment_type` discriminator: `SALE_INVOICE`, `CUSTOMER_PAYMENT`, `SUPPLIER_PAYOUT`).
+   - Chronological running balances in customer Khata and supplier statements guarantee `Debits - Credits = Current Balance`.
 
 
 ---

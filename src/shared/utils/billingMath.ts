@@ -163,6 +163,146 @@ export function calculateInvoiceTotals(
   };
 }
 
+export interface PurchaseLineTaxInput {
+  unitCostPaise: number;
+  quantity: number;
+  discountAmountPaise?: number;
+  taxRatePercent: number;
+  isInterState: boolean;
+}
+
+export interface PurchaseLineTaxResult {
+  quantity: number;
+  unitCostPaise: number;
+  discountAmountPaise: number;
+  taxableAmountPaise: number;
+  taxRatePercent: number;
+  cgstAmountPaise: number;
+  sgstAmountPaise: number;
+  igstAmountPaise: number;
+  totalTaxPaise: number;
+  totalAmountPaise: number;
+}
+
+/**
+ * Calculates B2B Purchase line item taxes where unitCost is the base taxable rate.
+ */
+export function calculatePurchaseLineTax(input: PurchaseLineTaxInput): PurchaseLineTaxResult {
+  const { unitCostPaise, quantity, taxRatePercent, isInterState } = input;
+  const discountAmountPaise = Math.max(0, input.discountAmountPaise || 0);
+
+  const rawTaxable = unitCostPaise * quantity;
+  const taxableAmountPaise = Math.max(0, rawTaxable - discountAmountPaise);
+
+  let totalTaxPaise = 0;
+  let cgstAmountPaise = 0;
+  let sgstAmountPaise = 0;
+  let igstAmountPaise = 0;
+
+  if (taxRatePercent > 0 && taxableAmountPaise > 0) {
+    totalTaxPaise = Math.round((taxableAmountPaise * taxRatePercent) / 100);
+
+    if (isInterState) {
+      igstAmountPaise = totalTaxPaise;
+      cgstAmountPaise = 0;
+      sgstAmountPaise = 0;
+    } else {
+      cgstAmountPaise = Math.round(totalTaxPaise / 2);
+      sgstAmountPaise = totalTaxPaise - cgstAmountPaise;
+      igstAmountPaise = 0;
+    }
+  }
+
+  const totalAmountPaise = taxableAmountPaise + cgstAmountPaise + sgstAmountPaise + igstAmountPaise;
+
+  return {
+    quantity,
+    unitCostPaise,
+    discountAmountPaise,
+    taxableAmountPaise,
+    taxRatePercent,
+    cgstAmountPaise,
+    sgstAmountPaise,
+    igstAmountPaise,
+    totalTaxPaise,
+    totalAmountPaise,
+  };
+}
+
+export interface PurchaseTotalsInput {
+  items: Array<{
+    unitCostPaise: number;
+    quantity: number;
+    discountAmountPaise?: number;
+    taxRatePercent: number;
+  }>;
+  discountAmountPaise?: number;
+  isInterState: boolean;
+}
+
+export interface PurchaseTotalsResult {
+  items: PurchaseLineTaxResult[];
+  taxableAmountPaise: number;
+  cgstAmountPaise: number;
+  sgstAmountPaise: number;
+  igstAmountPaise: number;
+  totalTaxPaise: number;
+  discountAmountPaise: number;
+  roundOffPaise: number;
+  totalAmountPaise: number;
+}
+
+export function calculatePurchaseTotals(input: PurchaseTotalsInput): PurchaseTotalsResult {
+  const { items: inputItems, isInterState } = input;
+  const billDiscount = Math.max(0, input.discountAmountPaise || 0);
+
+  let sumTaxable = 0;
+  let sumCgst = 0;
+  let sumSgst = 0;
+  let sumIgst = 0;
+  let sumTotalTax = 0;
+  let sumItemDiscount = 0;
+
+  const items = inputItems.map((item) => {
+    const res = calculatePurchaseLineTax({
+      unitCostPaise: item.unitCostPaise,
+      quantity: item.quantity,
+      discountAmountPaise: item.discountAmountPaise,
+      taxRatePercent: item.taxRatePercent,
+      isInterState,
+    });
+
+    sumTaxable += res.taxableAmountPaise;
+    sumCgst += res.cgstAmountPaise;
+    sumSgst += res.sgstAmountPaise;
+    sumIgst += res.igstAmountPaise;
+    sumTotalTax += res.totalTaxPaise;
+    sumItemDiscount += res.discountAmountPaise;
+
+    return res;
+  });
+
+  const totalDiscount = sumItemDiscount + billDiscount;
+  const subtotal = sumTaxable + sumTotalTax;
+  const postDiscount = Math.max(0, subtotal - billDiscount);
+
+  // Round off to nearest rupee
+  const totalAmountPaise = Math.round(postDiscount / 100) * 100;
+  const roundOffPaise = totalAmountPaise - postDiscount;
+
+  return {
+    items,
+    taxableAmountPaise: sumTaxable,
+    cgstAmountPaise: sumCgst,
+    sgstAmountPaise: sumSgst,
+    igstAmountPaise: sumIgst,
+    totalTaxPaise: sumTotalTax,
+    discountAmountPaise: totalDiscount,
+    roundOffPaise,
+    totalAmountPaise,
+  };
+}
+
 /**
  * Converts a rupee integer amount to English words using Indian Numbering Format.
  * (e.g. 154200 paise -> 1542 rupees -> "One Thousand Five Hundred Forty Two Rupees Only")

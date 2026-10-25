@@ -242,6 +242,16 @@ Migrations are version-controlled `.sql` files stored under `src/main/db/migrati
    - Seeds additional customer records including inter-state customers in Gujarat (`24`) and Delhi (`07`).
    - Configures `invoice_prefix` (`CR360-`) and `next_invoice_number` (`1001`) in `app_settings`.
    - Adds performance indices: `idx_sales_inv_number`, `idx_sales_inv_date`, `idx_sales_inv_status`, `idx_sales_items_inv`, `idx_payments_inv`, and `idx_cust_search`.
+5. `005_procurement_and_accounts.sql` (Combined Milestone 5):
+   - Enhances `suppliers` table with `payment_terms_days`, `notes`, `updated_at`.
+   - Enhances `customers` table with `credit_limit_paise`, `notes`, `updated_at`.
+   - Enhances `purchases` table with `subtotal_paise`, `discount_amount_paise`, `round_off_paise`, `total_amount_paise`, `supplier_name_snapshot`, `supplier_gstin_snapshot`, `place_of_supply`, `is_inter_state`, `notes`.
+   - Creates `uq_supplier_invoice` unique index on `purchases(supplier_id, supplier_invoice_number)` for duplicate bill prevention.
+   - Creates `purchase_items` table with product snapshot, variant snapshot, SKU snapshot, unit cost, discount, tax breakdown (CGST/SGST/IGST), returned quantity, and timestamps.
+   - Creates `purchase_returns` and `purchase_return_items` tables for vendor returns with compensatory stock adjustments and ledger credit.
+   - Enhances `payments` table with `payment_type` ('SALE_INVOICE', 'CUSTOMER_PAYMENT', 'SUPPLIER_PAYOUT'), `purchase_id`, and `balance_paise_snapshot`.
+   - Configures `purchase_prefix` (`PUR-`), `purchase_return_prefix` (`PR-`), `payment_receipt_prefix` (`REC-`), and `payment_payout_prefix` (`PAY-`) in `app_settings`.
+   - Adds composite performance indices: `idx_purchases_supplier_date`, `idx_purchases_status`, `idx_purchase_items_purchase`, `idx_purchase_returns_pur`, `idx_payments_party_type`, and `idx_payments_purchase`.
 
 A dedicated migration tracking table `_schema_migrations` tracks installed migrations:
 ```sql
