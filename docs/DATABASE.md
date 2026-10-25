@@ -354,13 +354,18 @@ The dashboard computes all metrics directly from SQLite using parameterized stat
 
 ---
 
-## 6. Backup & Recovery Strategy
+## 6. Backup & Recovery Strategy (Milestone 7 Verified)
 
-1. **Location:** Default database path is inside the OS AppData folder:
+1. **Persistent Location:** The production database is stored strictly inside the OS AppData user profile directory:
    `%APPDATA%\Cricket360\database\cricket360.sqlite`
-2. **Online Backup:** Uses SQLite's native `VACUUM INTO 'backup_path'` or SQLite Online Backup API. This ensures a hot, consistent backup even while the application is actively writing.
-3. **Safety:** Backups are written to a `.cricket360bak` file with an SHA-256 integrity hash.
-4. **Restoration:** Restores are performed by:
-   - Verifying the file's SQLite header and SHA-256 checksum.
-   - Performing an integrity check: `PRAGMA integrity_check;`.
-   - Safely closing active DB connections, copying the backup into place, and reopening.
+   This directory is persistent across application updates, preventing any installer overwrite of live business data.
+2. **Hot Online Snapshot:** Uses SQLite's native `VACUUM INTO 'backup_path'` after forcing a `wal_checkpoint(TRUNCATE)`. This ensures an atomic, consistent, non-blocking backup even during active store operations.
+3. **Backup Filenames & SHA-256 Checksums:**
+   - Standard Backups: `cricket360_backup_<TIMESTAMP>_<TAG>.db` stored in `%APPDATA%\Cricket360\backups\`.
+   - SHA-256 hash computed immediately and persisted to `backup_metadata`.
+4. **Pre-Restore Safety Snapshot & Non-Destructive Recovery:**
+   - Prior to replacing the live database, `restoreBackup()` automatically creates a safety snapshot: `pre_restore_backup_<TIMESTAMP>_<TAG>.db`.
+   - SQLite magic header (`SQLite format 3\0`) and internal `PRAGMA integrity_check` are validated before attempting file copy.
+   - Active database connections are cleanly closed and unlinked (`-wal` and `-shm` artifacts removed) to prevent Windows `EBUSY` file locking errors.
+   - The restored database is opened, verified with `PRAGMA integrity_check`, status updated to `'RESTORED'`, and logged to `audit_logs`.
+

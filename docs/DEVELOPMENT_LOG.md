@@ -1,5 +1,37 @@
 # Cricket360: Development Work Log
 
+## Log Entry: 2026-10-25 - Milestone 7: Final Polish, Packaging & Windows Release Readiness
+
+### Summary of Work Completed
+- **1. Windows Production Packaging & Installer:**
+  - Configured `electron-builder.yml` to package a production Windows NSIS installer and unpacked standalone binary:
+    - Generated `dist-package/Cricket360 Setup 1.0.0.exe` (89.9 MB).
+    - Generated `dist-package/win-unpacked/Cricket360.exe` (190.5 MB).
+  - Explicitly configured native SQLite unpack rules (`asarUnpack: ["**/*.node"]`) and bundled runtime dependencies (`node_modules/bindings/**/*`, `node_modules/file-uri-to-path/**/*`).
+  - Implemented and verified `scripts/verify-packaged.mjs` (wired to `npm run verify:package`): launched packaged `Cricket360.exe`, verified database initialization and migration execution in isolated AppData directory (`cricket360.sqlite` at 4096 bytes).
+- **2. Application Lifecycle & Graceful Shutdown:**
+  - Updated `src/main/index.ts` with `app.on('before-quit')` executing `closeDatabase()`.
+  - Added global uncaught exception and unhandled rejection handlers in Electron Main to safeguard active database connections and prevent silent data loss.
+- **3. Dual-Format Printing & Layout Isolation:**
+  - Updated `src/renderer/index.css` with dedicated `@media print` rules: automatically hides app chrome (sidebar, top bar, modal backdrops) and cleanly isolates `#printable-gst-invoice`.
+  - Added format toggle in `src/renderer/features/billing/PosBilling.tsx` between **A4 Standard Tax Invoice** and **80mm Thermal Receipt**.
+  - Implemented 80mm thermal receipt layout with centered branding, dashed separators, compact item listings, tax breakdown, and return policy.
+- **4. Audit Trail & Data Integrity Extensions:**
+  - Added audit trail logging in `src/main/db/billingRepo.ts` for `INVOICE_CANCEL` events.
+  - Added audit trail logging in `src/main/services/exportImportService.ts` for `DATA_IMPORT` events.
+  - Resolved Windows SQLite file-lock conflicts during restore in `src/main/services/backupService.ts` by ensuring active connections are closed and `-wal`/`-shm` lock files unlinked prior to replacement.
+- **5. Automated & Manual Verification Suite:**
+  - Created `tests/unit/services/releaseReadiness.test.ts` (5 automated tests):
+    1. Fresh database 6-migration sequence, WAL mode, foreign keys.
+    2. Offline CSP sovereignty (zero remote CDNs/scripts in `index.html`).
+    3. Hot backup creation, SHA-256 verification, pre-restore safety snapshot, and non-destructive restore.
+    4. CSV import validation guarding against corrupted/missing required attributes.
+    5. Windows installer package existence and size verification.
+  - Verified full test suite: **141 tests passing across 28 test files with 100% pass rate**.
+  - Verified `npm run typecheck`, `npm run build`, `npm run smoke-test`, and `npm run verify:package`.
+
+---
+
 ## Log Entry: 2026-10-25 - Milestone 6: Returns, Expenses, Reports & Business Controls
 
 ### Summary of Work Completed

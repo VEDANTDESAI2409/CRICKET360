@@ -46,6 +46,19 @@ if (!gotTheLock) {
       app.quit();
     }
   });
+
+  app.on('before-quit', () => {
+    closeDatabase();
+  });
+
+  process.on('uncaughtException', (err) => {
+    console.error('Fatal Uncaught Exception in Main Process:', err);
+    closeDatabase();
+  });
+
+  process.on('unhandledRejection', (reason) => {
+    console.error('Unhandled Promise Rejection in Main Process:', reason);
+  });
 }
 
 function createWindow(): void {

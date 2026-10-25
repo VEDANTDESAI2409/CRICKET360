@@ -682,6 +682,21 @@ export class BillingRepo {
           .run(invoice.balance_amount_paise, invoice.customer_id);
       }
 
+      // Log invoice cancellation into audit_logs if table exists
+      try {
+        this.db
+          .prepare(
+            `INSERT INTO audit_logs (action, entity_type, entity_id, details_json, username_snapshot)
+             VALUES ('INVOICE_CANCEL', 'sales_invoices', ?, ?, 'system')`
+          )
+          .run(
+            String(invoice.invoice_number),
+            JSON.stringify({ reason: reason.trim(), grandTotalPaise: invoice.grand_total_paise })
+          );
+      } catch {
+        // audit_logs table optional in legacy test migrations
+      }
+
       return this.getInvoiceById(invoiceId)!;
     });
 

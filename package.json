@@ -17,7 +17,8 @@
     "build": "npm run build:renderer && npm run build:electron",
     "smoke-test": "node scripts/switch-bindings.mjs electron && node scripts/smoke-test.mjs",
     "typecheck": "tsc --noEmit",
-    "package:win": "npm run build && electron-builder --win --x64"
+    "package:win": "npm run build && electron-builder --win --x64",
+    "verify:package": "node scripts/verify-packaged.mjs"
   },
   "dependencies": {
     "better-sqlite3": "12.11.1",

@@ -214,22 +214,38 @@ cricket360/
 │   ├── preload/            # Secure IPC exposure bridge
 │   │   └── index.ts
 │   ├── renderer/           # React frontend application
-│   │   ├── src/
-│   │   │   ├── components/ # Reusable UI components (Buttons, Cards, Modals, Tables)
-│   │   │   ├── layouts/    # App layout with Sidebar and Top Navigation
-│   │   │   ├── pages/      # Route pages (Dashboard, Billing, Products, Inventory, etc.)
-│   │   │   ├── services/   # Frontend API client calling window.api
-│   │   │   ├── styles/     # Tailwind and typography styles
-│   │   │   ├── utils/      # Formatting (currency, date, barcode)
-│   │   │   ├── App.tsx
-│   │   │   └── main.tsx
-│   │   └── index.html
+│   │   ├── features/       # Feature modules (billing, inventory, products, etc.)
+│   │   ├── components/     # Reusable UI components
+│   │   ├── index.css       # Tailwind CSS & print isolation styles
+│   │   └── App.tsx
 │   └── shared/             # Shared types, Zod schemas, constants
-│       ├── types/
-│       └── constants/
 ├── tests/                  # Unit and integration test suites
+├── scripts/                # Packaging, build, and verification scripts
 ├── electron-builder.yml    # Windows NSIS packaging configuration
 ├── package.json
-├── tsconfig.json
 └── vite.config.ts
 ```
+
+---
+
+## 6. Windows Packaging, Application Lifecycle & Printing Architecture (Milestone 7)
+
+### 6.1 Windows Installer & Distribution
+Cricket360 is packaged using `electron-builder` into a self-contained Windows NSIS installer and unpacked executable payload:
+- **Installer:** `dist-package/Cricket360 Setup 1.0.0.exe` (~89.9 MB)
+- **Executable Payload:** `dist-package/win-unpacked/Cricket360.exe` (~190.5 MB)
+- **Native Node Addons:** SQLite bindings (`better-sqlite3`, `bindings`, `file-uri-to-path`) are unpacked into `app.asar.unpacked` to allow instantaneous C++ ABI execution without runtime compilation.
+- **AppData Persistence:** Business data, user settings, and backups are stored in `%APPDATA%\Cricket360` (`userData`), completely decoupled from the application executable folder `%LOCALAPPDATA%\Programs\Cricket360`. App upgrades replace the binaries without modifying or deleting database files.
+
+### 6.2 Safe Application Lifecycle & Cleanup
+- **Single Instance Lock:** `app.requestSingleInstanceLock()` prevents multiple concurrent application instances from accessing the database simultaneously.
+- **Graceful Shutdown:** `app.on('before-quit')` explicitly executes `closeDatabase()`, cleanly closing SQLite WAL transactions and releasing OS file handles.
+- **Crash Resilience:** `process.on('uncaughtException')` and `process.on('unhandledRejection')` trap unexpected runtime exceptions, log them to the error stream, and safeguard active database connections.
+
+### 6.3 Dual-Format Printing Engine & Print Isolation
+- **Supported Formats:**
+  1. **A4 Full Tax Invoice:** Standard GST-compliant invoice format with multi-column table (HSN, Rate, Taxable, CGST, SGST, Total), store branding, terms, and signature line.
+  2. **80mm Thermal Slip Receipt:** High-speed counter format with centered logo/header, dashed separators, compact line items, summary box, and return policy.
+- **Print CSS Isolation:** `@media print` rules in `src/renderer/index.css` automatically hide the application header, sidebar navigation, action toolbars, and modal backdrops, rendering only the targeted invoice component (`#printable-gst-invoice`).
+- **Printer Hardware Compatibility:** Uses standard Windows Print Spooler (`window.print()`). Compatible with any thermal receipt printer (Epson, TVS, Citizen, NGX) or standard A4 laser/inkjet printer with zero vendor-specific driver dependencies.
+

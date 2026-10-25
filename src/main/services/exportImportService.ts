@@ -169,6 +169,17 @@ export class ExportImportService {
           errors.push(`Row ${lineIdx + 1} (${sku}): ${err instanceof Error ? err.message : String(err)}`);
         }
       }
+
+      try {
+        this.db
+          .prepare(
+            `INSERT INTO audit_logs (action, entity_type, entity_id, details_json, username_snapshot)
+             VALUES ('DATA_IMPORT', 'products', 'csv_bulk', ?, 'system')`
+          )
+          .run(JSON.stringify({ importedCount, errorCount: errors.length }));
+      } catch {
+        // Table may not exist in early test migrations
+      }
     });
 
     transaction();

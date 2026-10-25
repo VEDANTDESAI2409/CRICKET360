@@ -102,6 +102,7 @@ export const PosBilling: React.FC = () => {
   });
   const [completedInvoice, setCompletedInvoice] = useState<SalesInvoice | null>(null);
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState<boolean>(false);
+  const [printFormat, setPrintFormat] = useState<'A4' | 'THERMAL'>('A4');
 
   // Cancellation Modal
   const [invoiceToCancel, setInvoiceToCancel] = useState<SalesInvoice | null>(null);
@@ -1319,14 +1320,14 @@ export const PosBilling: React.FC = () => {
         </Modal>
       )}
 
-      {/* 4. GST TAX INVOICE PRINT MODAL */}
+      {/* 4. GST TAX INVOICE & THERMAL RECEIPT PRINT MODAL */}
       {isInvoiceModalOpen && completedInvoice && (
         <Modal
           isOpen={isInvoiceModalOpen}
           onClose={() => setIsInvoiceModalOpen(false)}
-          title="Tax Invoice"
+          title={printFormat === 'A4' ? 'Tax Invoice (A4 Standard)' : 'Thermal Receipt (80mm POS)'}
           subtitle={`Invoice #${completedInvoice.invoice_number}`}
-          maxWidth="3xl"
+          maxWidth={printFormat === 'A4' ? '3xl' : 'md'}
           footer={
             <div className="flex items-center justify-between w-full">
               <span className="text-xs text-retail-muted">
@@ -1346,227 +1347,369 @@ export const PosBilling: React.FC = () => {
                   icon={<Printer size={15} />}
                   onClick={handlePrint}
                 >
-                  Print Invoice
+                  Print {printFormat === 'A4' ? 'Invoice' : 'Receipt'}
                 </Button>
               </div>
             </div>
           }
         >
-          {/* Printable GST Invoice Paper View */}
-          <div
-            id="printable-gst-invoice"
-            className="p-6 bg-white border border-retail-border rounded-xl space-y-4 text-xs font-sans text-retail-text"
-          >
-            {/* Invoice Top Header */}
-            <div className="border-b-2 border-brand-dark pb-4 flex justify-between items-start">
-              <div>
-                <h2 className="text-xl font-extrabold text-brand-dark tracking-tight">
-                  {shopSettings.shopName}
-                </h2>
-                <p className="text-[11px] text-retail-muted mt-0.5">{shopSettings.shopAddress}</p>
-                <p className="text-[11px] text-retail-muted">
-                  Phone: {shopSettings.shopPhone} | Email: {shopSettings.shopEmail}
-                </p>
-                <p className="text-xs font-bold text-retail-text mt-1">
-                  GSTIN: <span className="font-mono">{shopSettings.shopGstin}</span> (State Code:{' '}
-                  {shopSettings.shopStateCode})
-                </p>
-              </div>
+          {/* Format Toggle Buttons */}
+          <div className="flex items-center justify-between gap-2 pb-3 border-b border-retail-border mb-3 no-print">
+            <div className="flex items-center gap-1 bg-retail-bg p-1 rounded-xl border border-retail-border">
+              <button
+                type="button"
+                onClick={() => setPrintFormat('A4')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  printFormat === 'A4'
+                    ? 'bg-brand-primary text-white shadow-2xs'
+                    : 'text-retail-muted hover:text-retail-text'
+                }`}
+              >
+                A4 Standard Tax Invoice
+              </button>
+              <button
+                type="button"
+                onClick={() => setPrintFormat('THERMAL')}
+                className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
+                  printFormat === 'THERMAL'
+                    ? 'bg-brand-primary text-white shadow-2xs'
+                    : 'text-retail-muted hover:text-retail-text'
+                }`}
+              >
+                80mm Thermal Receipt
+              </button>
+            </div>
+            <span className="text-[11px] text-retail-muted hidden sm:inline">
+              {printFormat === 'A4' ? 'Full page format with GST breakdown' : 'Compact roll format for POS thermal printers'}
+            </span>
+          </div>
 
-              <div className="text-right">
-                <span className="px-2.5 py-1 bg-brand-light text-brand-dark font-extrabold text-xs uppercase tracking-wider rounded">
-                  TAX INVOICE
-                </span>
-                <div className="mt-2 text-xs">
-                  <div>
-                    Invoice No:{' '}
-                    <strong className="font-mono">{completedInvoice.invoice_number}</strong>
-                  </div>
-                  <div>Date: {completedInvoice.invoice_date}</div>
-                  <div>
-                    Place of Supply: State Code{' '}
-                    <strong>{completedInvoice.place_of_supply}</strong>
+          {printFormat === 'A4' ? (
+            /* Printable GST Invoice Paper View (A4 Standard) */
+            <div
+              id="printable-gst-invoice"
+              className="p-6 bg-white border border-retail-border rounded-xl space-y-4 text-xs font-sans text-retail-text"
+            >
+              {/* Invoice Top Header */}
+              <div className="border-b-2 border-brand-dark pb-4 flex justify-between items-start">
+                <div>
+                  <h2 className="text-xl font-extrabold text-brand-dark tracking-tight">
+                    {shopSettings.shopName}
+                  </h2>
+                  <p className="text-[11px] text-retail-muted mt-0.5">{shopSettings.shopAddress}</p>
+                  <p className="text-[11px] text-retail-muted">
+                    Phone: {shopSettings.shopPhone} | Email: {shopSettings.shopEmail}
+                  </p>
+                  <p className="text-xs font-bold text-retail-text mt-1">
+                    GSTIN: <span className="font-mono">{shopSettings.shopGstin}</span> (State Code:{' '}
+                    {shopSettings.shopStateCode})
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <span className="px-2.5 py-1 bg-brand-light text-brand-dark font-extrabold text-xs uppercase tracking-wider rounded">
+                    TAX INVOICE
+                  </span>
+                  <div className="mt-2 text-xs">
+                    <div>
+                      Invoice No:{' '}
+                      <strong className="font-mono">{completedInvoice.invoice_number}</strong>
+                    </div>
+                    <div>Date: {completedInvoice.invoice_date}</div>
+                    <div>
+                      Place of Supply: State Code{' '}
+                      <strong>{completedInvoice.place_of_supply}</strong>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            {/* Bill To Info */}
-            <div className="p-3 bg-retail-bg rounded-xl border border-retail-border grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-[10px] text-retail-muted font-bold uppercase tracking-wider block">
-                  Billed To (Customer Details)
-                </span>
-                <div className="font-bold text-sm text-retail-text mt-0.5">
-                  {completedInvoice.customer_name_snapshot}
+              {/* Bill To Info */}
+              <div className="p-3 bg-retail-bg rounded-xl border border-retail-border grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <span className="text-[10px] text-retail-muted font-bold uppercase tracking-wider block">
+                    Billed To (Customer Details)
+                  </span>
+                  <div className="font-bold text-sm text-retail-text mt-0.5">
+                    {completedInvoice.customer_name_snapshot}
+                  </div>
+                  {completedInvoice.customer_phone_snapshot && (
+                    <div>Phone: {completedInvoice.customer_phone_snapshot}</div>
+                  )}
+                  {completedInvoice.customer_address_snapshot && (
+                    <div>Address: {completedInvoice.customer_address_snapshot}</div>
+                  )}
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-retail-muted font-bold uppercase tracking-wider block">
+                    Tax Details
+                  </span>
+                  <div>
+                    GSTIN:{' '}
+                    <span className="font-mono font-semibold">
+                      {completedInvoice.customer_gstin_snapshot || 'URP (Unregistered Person)'}
+                    </span>
+                  </div>
+                  <div>
+                    Type:{' '}
+                    <strong>
+                      {completedInvoice.is_inter_state ? 'Inter-State Supply (IGST)' : 'Intra-State Supply (CGST+SGST)'}
+                    </strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Line Items Table */}
+              <table className="w-full text-left text-xs border border-retail-border">
+                <thead className="bg-retail-bg border-b border-retail-border text-[10px] font-bold text-retail-muted uppercase">
+                  <tr>
+                    <th className="p-2">#</th>
+                    <th className="p-2">Item Description</th>
+                    <th className="p-2">HSN</th>
+                    <th className="p-2 text-center">Qty</th>
+                    <th className="p-2 text-right">Rate</th>
+                    <th className="p-2 text-right">Taxable</th>
+                    <th className="p-2 text-right">GST</th>
+                    <th className="p-2 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-retail-border">
+                  {completedInvoice.items?.map((item, idx) => (
+                    <tr key={item.id}>
+                      <td className="p-2 font-mono">{idx + 1}</td>
+                      <td className="p-2">
+                        <span className="font-bold break-words">{item.product_name_snapshot}</span>
+                        {item.variant_name_snapshot && (
+                          <span className="text-[11px] text-brand-dark block">
+                            {item.variant_name_snapshot}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-2 font-mono text-[11px]">{item.hsn_code_snapshot}</td>
+                      <td className="p-2 text-center font-mono">
+                        {item.quantity} {item.unit_snapshot}
+                      </td>
+                      <td className="p-2 text-right font-mono">
+                        {formatPaiseToRupees(item.unit_price_paise, false)}
+                      </td>
+                      <td className="p-2 text-right font-mono">
+                        {formatPaiseToRupees(item.taxable_amount_paise, false)}
+                      </td>
+                      <td className="p-2 text-right font-mono text-[11px]">
+                        {completedInvoice.is_inter_state
+                          ? `IGST (${item.tax_rate_percent}%): ${formatPaiseToRupees(item.igst_amount_paise, false)}`
+                          : `C+S (${item.tax_rate_percent}%): ${formatPaiseToRupees(item.cgst_amount_paise + item.sgst_amount_paise, false)}`}
+                      </td>
+                      <td className="p-2 text-right font-mono font-bold">
+                        {formatPaiseToRupees(item.total_amount_paise)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Calculations Breakdown */}
+              <div className="flex justify-between items-start pt-2">
+                <div className="max-w-md space-y-1 text-xs">
+                  <span className="text-[10px] text-retail-muted uppercase font-bold">
+                    Amount Chargeable (in words):
+                  </span>
+                  <div className="font-bold italic text-retail-text">
+                    {amountInWordsIndian(completedInvoice.grand_total_paise)}
+                  </div>
+
+                  {completedInvoice.payments && completedInvoice.payments.length > 0 && (
+                    <div className="mt-2 text-[11px] text-retail-muted">
+                      Payment Mode:{' '}
+                      <strong>
+                        {completedInvoice.payments.map((p) => p.payment_mode).join(', ')}
+                      </strong>
+                    </div>
+                  )}
+                </div>
+
+                <div className="w-64 space-y-1 text-xs text-right">
+                  <div className="flex justify-between">
+                    <span className="text-retail-muted">Total Taxable Value:</span>
+                    <span className="font-mono">
+                      {formatPaiseToRupees(completedInvoice.taxable_amount_paise)}
+                    </span>
+                  </div>
+                  {completedInvoice.is_inter_state ? (
+                    <div className="flex justify-between">
+                      <span className="text-retail-muted">Integrated GST:</span>
+                      <span className="font-mono">
+                        {formatPaiseToRupees(completedInvoice.igst_amount_paise)}
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-retail-muted">Central GST (CGST):</span>
+                        <span className="font-mono">
+                          {formatPaiseToRupees(completedInvoice.cgst_amount_paise)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-retail-muted">State GST (SGST):</span>
+                        <span className="font-mono">
+                          {formatPaiseToRupees(completedInvoice.sgst_amount_paise)}
+                        </span>
+                      </div>
+                    </>
+                  )}
+                  {completedInvoice.discount_amount_paise > 0 && (
+                    <div className="flex justify-between text-emerald-700 font-semibold">
+                      <span>Discount:</span>
+                      <span className="font-mono">
+                        -{formatPaiseToRupees(completedInvoice.discount_amount_paise)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-[11px] text-retail-muted">
+                    <span>Round-off:</span>
+                    <span className="font-mono">
+                      {completedInvoice.round_off_paise >= 0 ? '+' : ''}
+                      {(completedInvoice.round_off_paise / 100).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t-2 border-brand-dark text-base font-extrabold text-brand-dark">
+                    <span>Grand Total:</span>
+                    <span className="font-mono">
+                      {formatPaiseToRupees(completedInvoice.grand_total_paise)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Declarations */}
+              <div className="border-t border-retail-border pt-4 grid grid-cols-2 gap-4 text-[10px] text-retail-muted">
+                <div>
+                  <strong>Terms & Conditions:</strong>
+                  <ol className="list-decimal pl-4 space-y-0.5 mt-0.5">
+                    <li>Goods once sold can be exchanged within 7 days in original condition.</li>
+                    <li>Cricket bat warranty as per respective manufacturer policies.</li>
+                    <li>Subject to local jurisdiction.</li>
+                  </ol>
+                </div>
+                <div className="text-right flex flex-col justify-end">
+                  <span className="font-bold text-retail-text">For {shopSettings.shopName}</span>
+                  <span className="mt-8 border-t border-retail-border pt-1 inline-block">
+                    Authorized Signatory
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Printable Thermal Receipt View (80mm POS Roll) */
+            <div
+              id="printable-gst-invoice"
+              className="thermal-receipt-layout p-4 bg-white border border-dashed border-gray-400 rounded-xl space-y-2 text-xs font-mono text-black max-w-[340px] mx-auto shadow-sm"
+            >
+              {/* Thermal Header */}
+              <div className="text-center space-y-0.5 border-b border-dashed border-gray-400 pb-2">
+                <h2 className="text-sm font-extrabold uppercase tracking-tight">{shopSettings.shopName}</h2>
+                <p className="text-[10px] text-gray-700">{shopSettings.shopAddress}</p>
+                <p className="text-[10px] text-gray-700">Tel: {shopSettings.shopPhone}</p>
+                <p className="text-[10px] font-bold">GSTIN: {shopSettings.shopGstin} (State: {shopSettings.shopStateCode})</p>
+                <div className="font-bold text-[10px] uppercase tracking-wider pt-1">*** RETAIL TAX INVOICE ***</div>
+              </div>
+
+              {/* Invoice & Customer Meta */}
+              <div className="text-[10px] space-y-0.5 border-b border-dashed border-gray-400 pb-1.5">
+                <div className="flex justify-between">
+                  <span>Bill No: <strong>{completedInvoice.invoice_number}</strong></span>
+                  <span>Date: {completedInvoice.invoice_date}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Customer: {completedInvoice.customer_name_snapshot}</span>
+                  <span>POS: Counter-01</span>
                 </div>
                 {completedInvoice.customer_phone_snapshot && (
                   <div>Phone: {completedInvoice.customer_phone_snapshot}</div>
                 )}
-                {completedInvoice.customer_address_snapshot && (
-                  <div>Address: {completedInvoice.customer_address_snapshot}</div>
+                {completedInvoice.customer_gstin_snapshot && (
+                  <div>Cust GSTIN: {completedInvoice.customer_gstin_snapshot}</div>
                 )}
               </div>
-              <div className="text-right">
-                <span className="text-[10px] text-retail-muted font-bold uppercase tracking-wider block">
-                  Tax Details
-                </span>
-                <div>
-                  GSTIN:{' '}
-                  <span className="font-mono font-semibold">
-                    {completedInvoice.customer_gstin_snapshot || 'URP (Unregistered Person)'}
-                  </span>
-                </div>
-                <div>
-                  Type:{' '}
-                  <strong>
-                    {completedInvoice.is_inter_state ? 'Inter-State Supply (IGST)' : 'Intra-State Supply (CGST+SGST)'}
-                  </strong>
-                </div>
-              </div>
-            </div>
 
-            {/* Line Items Table */}
-            <table className="w-full text-left text-xs border border-retail-border">
-              <thead className="bg-retail-bg border-b border-retail-border text-[10px] font-bold text-retail-muted uppercase">
-                <tr>
-                  <th className="p-2">#</th>
-                  <th className="p-2">Item Description</th>
-                  <th className="p-2">HSN</th>
-                  <th className="p-2 text-center">Qty</th>
-                  <th className="p-2 text-right">Rate</th>
-                  <th className="p-2 text-right">Taxable</th>
-                  <th className="p-2 text-right">GST</th>
-                  <th className="p-2 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-retail-border">
-                {completedInvoice.items?.map((item, idx) => (
-                  <tr key={item.id}>
-                    <td className="p-2 font-mono">{idx + 1}</td>
-                    <td className="p-2">
-                      <span className="font-bold">{item.product_name_snapshot}</span>
-                      {item.variant_name_snapshot && (
-                        <span className="text-[11px] text-brand-dark block">
-                          {item.variant_name_snapshot}
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-2 font-mono text-[11px]">{item.hsn_code_snapshot}</td>
-                    <td className="p-2 text-center font-mono">
-                      {item.quantity} {item.unit_snapshot}
-                    </td>
-                    <td className="p-2 text-right font-mono">
-                      {formatPaiseToRupees(item.unit_price_paise, false)}
-                    </td>
-                    <td className="p-2 text-right font-mono">
-                      {formatPaiseToRupees(item.taxable_amount_paise, false)}
-                    </td>
-                    <td className="p-2 text-right font-mono text-[11px]">
-                      {completedInvoice.is_inter_state
-                        ? `IGST (${item.tax_rate_percent}%): ${formatPaiseToRupees(item.igst_amount_paise, false)}`
-                        : `C+S (${item.tax_rate_percent}%): ${formatPaiseToRupees(item.cgst_amount_paise + item.sgst_amount_paise, false)}`}
-                    </td>
-                    <td className="p-2 text-right font-mono font-bold">
-                      {formatPaiseToRupees(item.total_amount_paise)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Calculations Breakdown */}
-            <div className="flex justify-between items-start pt-2">
-              <div className="max-w-md space-y-1 text-xs">
-                <span className="text-[10px] text-retail-muted uppercase font-bold">
-                  Amount Chargeable (in words):
-                </span>
-                <div className="font-bold italic text-retail-text">
-                  {amountInWordsIndian(completedInvoice.grand_total_paise)}
+              {/* Items List */}
+              <div className="border-b border-dashed border-gray-400 pb-2 space-y-1.5">
+                <div className="flex justify-between text-[10px] font-bold border-b border-gray-300 pb-0.5">
+                  <span className="w-1/2">Item</span>
+                  <span className="w-1/4 text-center">Qty x Rate</span>
+                  <span className="w-1/4 text-right">Total</span>
                 </div>
-
-                {completedInvoice.payments && completedInvoice.payments.length > 0 && (
-                  <div className="mt-2 text-[11px] text-retail-muted">
-                    Payment Mode:{' '}
-                    <strong>
-                      {completedInvoice.payments.map((p) => p.payment_mode).join(', ')}
-                    </strong>
+                {completedInvoice.items?.map((item) => (
+                  <div key={item.id} className="text-[10px] leading-tight">
+                    <div className="font-semibold break-words">{item.product_name_snapshot}</div>
+                    {item.variant_name_snapshot && (
+                      <div className="text-[9px] text-gray-600">({item.variant_name_snapshot})</div>
+                    )}
+                    <div className="flex justify-between text-[9px] text-gray-800 pt-0.5">
+                      <span>HSN: {item.hsn_code_snapshot || '-'} (GST {item.tax_rate_percent}%)</span>
+                      <span>{item.quantity} x {formatPaiseToRupees(item.unit_price_paise, false)}</span>
+                      <span className="font-bold">{formatPaiseToRupees(item.total_amount_paise)}</span>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
 
-              <div className="w-64 space-y-1 text-xs text-right">
+              {/* Totals Breakdown */}
+              <div className="text-[10px] space-y-1 border-b border-dashed border-gray-400 pb-2">
                 <div className="flex justify-between">
-                  <span className="text-retail-muted">Total Taxable Value:</span>
-                  <span className="font-mono">
-                    {formatPaiseToRupees(completedInvoice.taxable_amount_paise)}
-                  </span>
+                  <span>Taxable Value:</span>
+                  <span>{formatPaiseToRupees(completedInvoice.taxable_amount_paise)}</span>
                 </div>
                 {completedInvoice.is_inter_state ? (
                   <div className="flex justify-between">
-                    <span className="text-retail-muted">Integrated GST:</span>
-                    <span className="font-mono">
-                      {formatPaiseToRupees(completedInvoice.igst_amount_paise)}
-                    </span>
+                    <span>IGST:</span>
+                    <span>{formatPaiseToRupees(completedInvoice.igst_amount_paise)}</span>
                   </div>
                 ) : (
                   <>
                     <div className="flex justify-between">
-                      <span className="text-retail-muted">Central GST (CGST):</span>
-                      <span className="font-mono">
-                        {formatPaiseToRupees(completedInvoice.cgst_amount_paise)}
-                      </span>
+                      <span>CGST:</span>
+                      <span>{formatPaiseToRupees(completedInvoice.cgst_amount_paise)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-retail-muted">State GST (SGST):</span>
-                      <span className="font-mono">
-                        {formatPaiseToRupees(completedInvoice.sgst_amount_paise)}
-                      </span>
+                      <span>SGST:</span>
+                      <span>{formatPaiseToRupees(completedInvoice.sgst_amount_paise)}</span>
                     </div>
                   </>
                 )}
                 {completedInvoice.discount_amount_paise > 0 && (
-                  <div className="flex justify-between text-emerald-700 font-semibold">
+                  <div className="flex justify-between">
                     <span>Discount:</span>
-                    <span className="font-mono">
-                      -{formatPaiseToRupees(completedInvoice.discount_amount_paise)}
+                    <span>-{formatPaiseToRupees(completedInvoice.discount_amount_paise)}</span>
+                  </div>
+                )}
+                {completedInvoice.round_off_paise !== 0 && (
+                  <div className="flex justify-between">
+                    <span>Round-off:</span>
+                    <span>
+                      {(completedInvoice.round_off_paise >= 0 ? '+' : '') +
+                        (completedInvoice.round_off_paise / 100).toFixed(2)}
                     </span>
                   </div>
                 )}
-                <div className="flex justify-between text-[11px] text-retail-muted">
-                  <span>Round-off:</span>
-                  <span className="font-mono">
-                    {completedInvoice.round_off_paise >= 0 ? '+' : ''}
-                    {(completedInvoice.round_off_paise / 100).toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between pt-2 border-t-2 border-brand-dark text-base font-extrabold text-brand-dark">
-                  <span>Grand Total:</span>
-                  <span className="font-mono">
-                    {formatPaiseToRupees(completedInvoice.grand_total_paise)}
-                  </span>
+                <div className="flex justify-between text-xs font-extrabold border-t border-black pt-1">
+                  <span>GRAND TOTAL:</span>
+                  <span>{formatPaiseToRupees(completedInvoice.grand_total_paise)}</span>
                 </div>
               </div>
-            </div>
 
-            {/* Footer Declarations */}
-            <div className="border-t border-retail-border pt-4 grid grid-cols-2 gap-4 text-[10px] text-retail-muted">
-              <div>
-                <strong>Terms & Conditions:</strong>
-                <ol className="list-decimal pl-4 space-y-0.5 mt-0.5">
-                  <li>Goods once sold can be exchanged within 7 days in original condition.</li>
-                  <li>Cricket bat warranty as per respective manufacturer policies.</li>
-                  <li>Subject to local jurisdiction.</li>
-                </ol>
-              </div>
-              <div className="text-right flex flex-col justify-end">
-                <span className="font-bold text-retail-text">For {shopSettings.shopName}</span>
-                <span className="mt-8 border-t border-retail-border pt-1 inline-block">
-                  Authorized Signatory
-                </span>
+              {/* Payment Info & Footer */}
+              <div className="text-[9px] text-center space-y-0.5 pt-1">
+                <div className="font-bold">{amountInWordsIndian(completedInvoice.grand_total_paise)}</div>
+                {completedInvoice.payments && completedInvoice.payments.length > 0 && (
+                  <div>Payment Mode: {completedInvoice.payments.map((p) => p.payment_mode).join(', ')}</div>
+                )}
+                <div className="text-gray-700 pt-1 font-semibold">Thank you for visiting {shopSettings.shopName}!</div>
+                <div className="text-[8px] text-gray-500">Exchange within 7 days against valid receipt.</div>
               </div>
             </div>
-          </div>
+          )}
         </Modal>
       )}
 

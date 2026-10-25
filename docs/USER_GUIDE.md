@@ -373,3 +373,38 @@ Cricket360 provides real-time, date-filtered business analytics that reconcile s
 2. **Role-Based Access Control (RBAC):**
    - Review permissions across `ADMIN`, `CASHIER`, and `STAFF` roles covering POS Billing, Catalog Management, Inventory Adjustments, Procurement, Expenses, Reports, Backups, and Settings.
 
+---
+
+## 15. Windows Installation, Printer Configuration & Offline Operation (Milestone 7)
+
+### 15.1 Windows Desktop Installation
+1. Locate the distributable setup installer: `Cricket360 Setup 1.0.0.exe` (found in the release package or build directory `dist-package/`).
+2. Double-click the installer executable.
+3. The NSIS setup wizard installs the application into `%LOCALAPPDATA%\Programs\Cricket360`.
+4. A desktop shortcut and Start Menu entry are automatically created.
+5. Launch the application from the desktop shortcut or Start Menu.
+6. **First Run:** Cricket360 automatically initializes your business database and executes all 6 database schema migrations within `%APPDATA%\Cricket360\database\cricket360.sqlite`.
+7. **App Upgrades:** Installing newer versions of Cricket360 replaces only the executable binaries. All products, sales history, customer accounts, and settings stored in `%APPDATA%\Cricket360` remain completely preserved.
+
+### 15.2 Dual Printer Configuration (Thermal Slip vs A4 Laser/Inkjet)
+Cricket360 uses the native Windows Print Spooler (`window.print()`), compatible with all standard Windows printers:
+
+#### 1. 80mm Thermal Receipt Printer Setup:
+- Connect your thermal printer (Epson TM-T82, TVS RP3200, NGX, Posiflex, Citizen) via USB.
+- In Windows **Settings > Bluetooth & devices > Printers & scanners**, verify the printer driver is active.
+- Set paper size to **80mm x Receipt** (or Roll Paper 80 x 297 mm) and set margins to **None / Minimum**.
+- In Cricket360 POS Billing checkout modal, select **80mm Thermal Receipt** before clicking **Print Receipt**.
+
+#### 2. Standard A4 Tax Invoice Printer Setup:
+- Connect your standard desktop laser or inkjet printer (HP, Canon, Epson, Brother).
+- In Windows printer settings, verify paper size is set to **A4 (210 x 297 mm)**.
+- In Cricket360 POS Billing checkout modal, select **A4 Standard Tax Invoice** before clicking **Print Invoice**.
+
+#### 3. Print Isolation:
+- When printing, Cricket360 automatically strips all application navigation bars, sidebars, buttons, and modal backdrops (`@media print`), sending only the clean invoice document to the printer.
+
+### 15.3 Offline-First Operation & Data Sovereignty
+- Cricket360 operates 100% offline without needing internet access, cloud servers, or remote licensing checks.
+- All product lookups, barcode scans, sales transactions, purchases, customer ledgers, and reporting queries execute locally against the embedded SQLite database in microsecond speeds.
+- For emergency recovery or data transfer to another machine, copy the backup file from `%APPDATA%\Cricket360\backups\` or trigger a manual backup from **Settings > Database Backup & Restore**.
+

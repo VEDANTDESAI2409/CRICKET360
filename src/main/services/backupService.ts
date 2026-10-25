@@ -34,9 +34,13 @@ export function computeSha256(filePath: string): string {
 
 export class BackupService {
   private customDb?: Database.Database;
+  private backupDir?: string;
+  private dbPath?: string;
 
-  constructor(db?: Database.Database) {
+  constructor(db?: Database.Database, backupDir?: string, dbPath?: string) {
     this.customDb = db;
+    this.backupDir = backupDir;
+    this.dbPath = dbPath;
   }
 
   private getDb(): Database.Database {
@@ -49,7 +53,7 @@ export class BackupService {
     userId?: number
   ): BackupMetadata {
     const db = this.getDb();
-    const backupDir = getBackupDirectory();
+    const backupDir = this.backupDir || getBackupDirectory();
 
     // 1. Force WAL checkpoint to ensure all data is in the main database file
     db.pragma('wal_checkpoint(TRUNCATE)');
@@ -130,7 +134,7 @@ export class BackupService {
   }
 
   verifyBackup(backupFilename: string): VerifyBackupResult {
-    const backupDir = getBackupDirectory();
+    const backupDir = this.backupDir || getBackupDirectory();
     const filePath = path.join(backupDir, backupFilename);
 
     if (!fs.existsSync(filePath)) {
@@ -220,7 +224,7 @@ export class BackupService {
       };
     }
 
-    const backupDir = getBackupDirectory();
+    const backupDir = this.backupDir || getBackupDirectory();
     const candidatePath = path.join(backupDir, backupFilename);
 
     let preRestorePath: string | undefined;
@@ -235,21 +239,31 @@ export class BackupService {
       preRestorePath = preRestoreMeta.file_path;
 
       // 3. Close active database
+      if (this.customDb) {
+        try {
+          this.customDb.close();
+        } catch {}
+      }
       closeDatabase();
 
       // 4. Copy candidate backup into active db path
-      const activeDbPath = getDatabasePath();
+      const activeDbPath = this.dbPath || getDatabasePath();
 
       // Clean up WAL/SHM artifacts if any
       const walPath = `${activeDbPath}-wal`;
       const shmPath = `${activeDbPath}-shm`;
-      if (fs.existsSync(walPath)) fs.unlinkSync(walPath);
-      if (fs.existsSync(shmPath)) fs.unlinkSync(shmPath);
+      try {
+        if (fs.existsSync(walPath)) fs.unlinkSync(walPath);
+      } catch {}
+      try {
+        if (fs.existsSync(shmPath)) fs.unlinkSync(shmPath);
+      } catch {}
 
       fs.copyFileSync(candidatePath, activeDbPath);
 
       // 5. Re-open active database and run sanity integrity check
-      const restoredDb = initDatabase(activeDbPath);
+      const restoredDb = this.dbPath ? new Database(this.dbPath) : initDatabase(activeDbPath);
+      this.customDb = restoredDb;
       const integrity = restoredDb.pragma('integrity_check', { simple: true });
       if (integrity !== 'ok') {
         throw new Error(`Restored database failed integrity check: ${integrity}`);
@@ -285,7 +299,7 @@ export class BackupService {
         success: false,
         preRestoreBackupPath: preRestorePath,
         restoredFrom: backupFilename,
-        error: err instanceof Error ? err.message : String(err),
+        error: err instanceof Error ? `${err.message}\nStack: ${err.stack}` : String(err),
       };
     }
   }

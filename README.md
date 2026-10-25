@@ -34,7 +34,7 @@
 - [x] **Milestone 4:** Point of Sale (POS) & GST Billing
 - [x] **Combined Milestone 5:** Procurement, Supplier Management & Customer Accounts
 - [x] **Milestone 6:** Returns, Expenses, Reports & Business Controls
-- [ ] **Milestone 7 (Future):** Final System Polish, Release Readiness & Distribution
+- [x] **Milestone 7:** Final Polish, Packaging & Windows Release Readiness
 
 ---
 
@@ -82,12 +82,30 @@ npm install
 # 2. Run in development mode (hot-reload for renderer & main)
 npm run dev
 
-# 3. Run automated tests
+# 3. Run automated tests (141 tests across 28 suites)
 npm test
 
-# 4. Build Windows installer package
+# 4. Verify TypeScript and production bundle
+npm run typecheck
+npm run build
+
+# 5. Build Windows installer package (NSIS + Unpacked)
 npm run package:win
+
+# 6. Verify packaged Windows executable directly
+npm run verify:package
 ```
+
+---
+
+## Production Installer & Packaging Artifacts
+
+The Windows production build generates distributable standalone artifacts in `dist-package/`:
+- **NSIS Installer:** `dist-package/Cricket360 Setup 1.0.0.exe` (~89.9 MB)
+- **Unpacked Executable:** `dist-package/win-unpacked/Cricket360.exe` (~190.5 MB)
+
+### Installation
+Run `Cricket360 Setup 1.0.0.exe` to install to `%LOCALAPPDATA%\Programs\Cricket360`. An optional desktop shortcut is created. Business data is never overwritten during application updates.
 
 ---
 
@@ -97,3 +115,4 @@ User database and backup files are safely persisted in the user profile director
 - Database: `%APPDATA%\Cricket360\database\cricket360.sqlite`
 - Backups: `%APPDATA%\Cricket360\backups\`
 - Logs: `%APPDATA%\Cricket360\logs\`
+- Pre-Restore Safety Snapshots: `%APPDATA%\Cricket360\backups\pre_restore_backup_*.db`

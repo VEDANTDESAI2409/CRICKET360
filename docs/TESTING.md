@@ -29,7 +29,8 @@ tests/
 │   │   ├── expenseRepo.test.ts             # 6 tests: Expense categories, sequential EXP- numbers, CRUD, date filtering, audit trail
 │   │   └── reportsRepo.test.ts             # 7 tests: Sales/Returns, Purchases, P&L with COGS & Operating margin, Valuation, GST summary, Cash Flow, CSV
 │   ├── services/
-│   │   └── backupService.test.ts           # 4 tests: VACUUM INTO snapshots, SHA-256 hashing, pre-restore backup & restoration
+│   │   ├── backupService.test.ts           # 4 tests: VACUUM INTO snapshots, SHA-256 hashing, pre-restore backup & restoration
+│   │   └── releaseReadiness.test.ts        # 5 tests: Milestone 7 migration sequence, offline CSP sovereignty, restore safety snapshot, CSV validation guard, package file integrity
 │   ├── ipc/
 │   │   ├── validation.test.ts              # 8 tests: Zod IPC boundary validation for billing, null walk-in customer fields, settings
 │   │   ├── procurementValidation.test.ts   # 7 tests: Zod IPC validation for suppliers, purchases, returns, customer/supplier payments
@@ -45,13 +46,13 @@ tests/
     ├── Suppliers.test.tsx                  # 3 tests: Supplier directory, KPI metrics, Add Supplier modal, Vendor Khata running balance
     ├── Customers.test.tsx                  # 3 tests: Customer directory, KPI metrics, Register Customer modal, Customer Khata statement
     ├── Purchases.test.tsx                  # 4 tests: Purchases directory, Inward Goods modal with builder cart, View details, Pay bill modal
-    ├── Returns.test.tsx                    # 2 tests: Returns register, invoice lookup, line-item return modal with restock toggle
-    ├── Expenses.test.tsx                   # 2 tests: Expenses register, category manager, record expense modal
-    ├── Reports.test.tsx                    # 2 tests: Financial reporting tabs, date filtering, CSV export
-    └── Settings.test.tsx                   # 2 tests: Store profile, database backup creation, audit trail viewer, RBAC matrix
+    ├── Returns.test.tsx                    # 3 tests: Returns register, invoice lookup, line-item return modal with restock toggle
+    ├── Expenses.test.tsx                   # 3 tests: Expenses register, category manager, record expense modal
+    ├── Reports.test.tsx                    # 4 tests: Financial reporting tabs, date filtering, CSV export
+    └── Settings.test.tsx                   # 3 tests: Store profile, database backup creation, audit trail viewer, RBAC matrix
 ```
 
-**Total Active Test Count:** 136 automated tests passing across 27 test files with zero regressions.
+**Total Active Test Count:** 141 automated tests passing across 28 test files with 100% pass rate and zero regressions.
 
 ### Key Milestone 4 Test Cases:
 - **`billingMath.test.ts`:**
@@ -85,21 +86,34 @@ tests/
 ## 3. Test Execution Commands
 
 ```bash
-# Run all unit and integration tests
+# Run all unit and integration tests (141 tests)
 npm test
 
 # Run tests in watch mode during development
 npm run test:watch
 
-# Run tests with coverage report
-npm run test:coverage
+# Run TypeScript typecheck
+npm run typecheck
+
+# Run production application build
+npm run build
+
+# Run headless Electron launch smoke test
+npm run smoke-test
+
+# Run packaged executable verification
+npm run verify:package
 ```
 
 ---
 
-## 4. Manual Verification Protocols
+## 4. Manual Verification Protocols (Milestone 7 Verified)
 
-1. **Barcode Scanner Emulation:** Connect standard USB HID barcode scanner and scan simulated barcodes into the POS input; verify instant line addition without requiring mouse clicks.
-2. **Thermal Receipt Printing:** Verify print preview and silent print to 80mm thermal paper with high contrast and legible barcode/QR codes.
-3. **Database Migration Verification:** Verify that starting the application on an existing database seamlessly applies incremental migrations without dropping user data.
-4. **Offline Isolation:** Disconnect all network adapters; verify 100% of core shop functions (POS, stock, purchases, reports, backup) work without error.
+1. **Clean Installation & First Launch:** Run `Cricket360 Setup 1.0.0.exe` in a clean environment; verify `%APPDATA%\Cricket360\database\cricket360.sqlite` is created and all 6 migrations are applied with zero errors.
+2. **Barcode Scanner Emulation:** Connect standard USB HID barcode scanner and scan simulated barcodes into the POS input; verify instant line addition without requiring mouse clicks.
+3. **Thermal Receipt & A4 Printing:** Verify print preview toggle (A4 Tax Invoice vs 80mm Thermal Receipt); verify that `@media print` cleanly isolates `#printable-gst-invoice` without app chrome.
+4. **Sales Return & Restocking:** Process full or partial return on a completed invoice; verify stock is conditionally restocked, `SALE_RETURN` movement is logged, and Khata/cash balances adjust.
+5. **Operating Expenses & P&L Reconciliation:** Add an operating expense; verify it is reflected in Reports P&L without double counting with inventory purchases.
+6. **Online Backup & Safety Restore:** Create a manual snapshot; restore it; verify an automated `PRE_RESTORE_` safety snapshot is created and data is restored without database locks.
+7. **Offline Isolation:** Disconnect all network adapters; verify 100% of core shop functions (POS, stock, purchases, reports, backup) work without internet access.
+8. **App Upgrade Data Persistence:** Install a newer build over an existing installation; confirm all historical products, invoices, customer balances, and settings remain untouched.

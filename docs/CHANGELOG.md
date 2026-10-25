@@ -4,6 +4,28 @@ All notable changes to the Cricket360 project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-10-25
+### Added - Milestone 7: Final Polish, Packaging & Windows Release Readiness
+- **Production Windows Packaging & Installer (`electron-builder.yml`, `scripts/verify-packaged.mjs`):**
+  - Configured Windows NSIS installer (`Cricket360 Setup 1.0.0.exe`, 89.9 MB) and unpacked portable executable (`win-unpacked/Cricket360.exe`, 190.5 MB).
+  - Configured native SQLite addon unpacking (`asarUnpack: ["**/*.node"]`) and bundle runtime dependencies (`bindings`, `file-uri-to-path`) for reliable standalone execution on clean Windows environments.
+  - Validated first-run database creation and migration execution in `%APPDATA%\Cricket360\database\cricket360.sqlite`.
+  - Upgrades safe: installer updates binaries without deleting or modifying persistent user business data.
+- **Application Lifecycle & Error Cleanup (`src/main/index.ts`):**
+  - Added graceful shutdown handler on `app.on('before-quit')` explicitly executing `closeDatabase()`.
+  - Added global process error handlers (`uncaughtException`, `unhandledRejection`) ensuring active database transactions are safeguarded and logged.
+- **Dual-Format Printing & Layout Isolation (`PosBilling.tsx`, `index.css`):**
+  - Added instant format toggle between **A4 Standard Tax Invoice** and **80mm Thermal Receipt**.
+  - Added dedicated 80mm thermal receipt layout with centered branding, dashed separators, compact line items, summary box, and return policy.
+  - Added `@media print` CSS rules hiding app sidebar, top bar, and modal backdrop chrome, isolating only `#printable-gst-invoice`.
+- **Audit Trail & Integrity Extensions (`billingRepo.ts`, `exportImportService.ts`, `backupService.ts`):**
+  - Added audit logging for `INVOICE_CANCEL` and `DATA_IMPORT` events.
+  - Enhanced `BackupService` with custom database path isolation, WAL checkpointing, and safe connection unlinking to prevent Windows `EBUSY` file locking errors.
+- **Automated & Manual Verification Suite (`releaseReadiness.test.ts`):**
+  - Added 5 new release readiness automated tests covering sequential 6-migration execution, offline CSP sovereignty, online backup/restore safety snapshots, and CSV import validation.
+  - Total test count expanded to **141 automated tests passing across 28 test files with 100% pass rate**.
+  - Passed `npm run typecheck`, `npm test`, `npm run build`, `npm run smoke-test`, and `npm run verify:package`.
+
 ## [1.0.0-m6] - 2026-10-25
 ### Added - Milestone 6: Returns, Expenses, Reports & Business Controls
 - **Sales Returns & Restocking Engine (`Returns.tsx`, `returnsRepo.ts`):**
