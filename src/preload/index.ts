@@ -80,6 +80,50 @@ const api: IpcApi = {
     recordSupplierPayment: (data) => ipcRenderer.invoke('payments:recordSupplierPayment', data),
     recordCustomerPayment: (data) => ipcRenderer.invoke('payments:recordCustomerPayment', data),
   },
+  returns: {
+    getAll: (filters) => ipcRenderer.invoke('returns:getAll', filters),
+    getById: (id) => ipcRenderer.invoke('returns:getById', id),
+    create: (data) => ipcRenderer.invoke('returns:create', data),
+    getNextNumber: () => ipcRenderer.invoke('returns:getNextNumber'),
+  },
+  expenses: {
+    getCategories: () => ipcRenderer.invoke('expenses:getCategories'),
+    createCategory: (data) => ipcRenderer.invoke('expenses:createCategory', data),
+    getAll: (filters) => ipcRenderer.invoke('expenses:getAll', filters),
+    getById: (id) => ipcRenderer.invoke('expenses:getById', id),
+    create: (data) => ipcRenderer.invoke('expenses:create', data),
+    update: (data) => ipcRenderer.invoke('expenses:update', data),
+    delete: (id) => ipcRenderer.invoke('expenses:delete', id),
+    getNextNumber: () => ipcRenderer.invoke('expenses:getNextNumber'),
+  },
+  reports: {
+    getSalesReport: (filter) => ipcRenderer.invoke('reports:getSalesReport', filter),
+    getPurchaseReport: (filter) => ipcRenderer.invoke('reports:getPurchaseReport', filter),
+    getProfitLossReport: (filter) => ipcRenderer.invoke('reports:getProfitLossReport', filter),
+    getInventoryValuationReport: () => ipcRenderer.invoke('reports:getInventoryValuationReport'),
+    getTaxReport: (filter) => ipcRenderer.invoke('reports:getTaxReport', filter),
+    getPaymentsSummaryReport: (filter) => ipcRenderer.invoke('reports:getPaymentsSummaryReport', filter),
+    exportCsv: (reportType, filter) => ipcRenderer.invoke('reports:exportCsv', reportType, filter),
+  },
+  backups: {
+    create: (notes) => ipcRenderer.invoke('backups:create', notes),
+    getAll: () => ipcRenderer.invoke('backups:getAll'),
+    verify: (backupFilename) => ipcRenderer.invoke('backups:verify', backupFilename),
+    restore: (backupFilename) => ipcRenderer.invoke('backups:restore', backupFilename),
+  },
+  audit: {
+    getLogs: (filters) => ipcRenderer.invoke('audit:getLogs', filters),
+  },
+  systemSettings: {
+    get: () => ipcRenderer.invoke('systemSettings:get'),
+    update: (data) => ipcRenderer.invoke('systemSettings:update', data),
+  },
+  exportImport: {
+    exportProductsCsv: () => ipcRenderer.invoke('exportImport:exportProductsCsv'),
+    importProductsCsv: (csvContent) => ipcRenderer.invoke('exportImport:importProductsCsv', csvContent),
+    exportCustomersCsv: () => ipcRenderer.invoke('exportImport:exportCustomersCsv'),
+    exportSalesCsv: (filter) => ipcRenderer.invoke('exportImport:exportSalesCsv', filter),
+  },
 };
 
 // Expose the protected API to the renderer process

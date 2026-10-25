@@ -24,10 +24,16 @@ tests/
 │   │   ├── inventoryRepo.test.ts           # 5 tests: Adjustments, variance, ledger audit trail, variant rollup
 │   │   ├── billingRepo.test.ts             # 10 tests: Sequential numbering, atomic sale, stock deduction, walk-in/registered snapshots, cancellation
 │   │   ├── purchaseRepo.test.ts            # 5 tests: Inward receipts, duplicate invoice prevention, tax calculation, purchase returns & stock restitution
-│   │   └── accountRepo.test.ts             # 5 tests: Customer Khata, supplier ledger, partial payments, payment allocation & balance invariants
+│   │   ├── accountRepo.test.ts             # 5 tests: Customer Khata, supplier ledger, partial payments, payment allocation & balance invariants
+│   │   ├── returnsRepo.test.ts             # 5 tests: Full/partial sales returns, restock flag, refund treatments, customer Khata debit
+│   │   ├── expenseRepo.test.ts             # 6 tests: Expense categories, sequential EXP- numbers, CRUD, date filtering, audit trail
+│   │   └── reportsRepo.test.ts             # 7 tests: Sales/Returns, Purchases, P&L with COGS & Operating margin, Valuation, GST summary, Cash Flow, CSV
+│   ├── services/
+│   │   └── backupService.test.ts           # 4 tests: VACUUM INTO snapshots, SHA-256 hashing, pre-restore backup & restoration
 │   ├── ipc/
 │   │   ├── validation.test.ts              # 8 tests: Zod IPC boundary validation for billing, null walk-in customer fields, settings
-│   │   └── procurementValidation.test.ts   # 7 tests: Zod IPC validation for suppliers, purchases, returns, customer/supplier payments
+│   │   ├── procurementValidation.test.ts   # 7 tests: Zod IPC validation for suppliers, purchases, returns, customer/supplier payments
+│   │   └── m6Validation.test.ts            # 7 tests: Zod IPC validation for sales returns, expenses, reports, backup, and store settings
 │   └── utils/
 │       └── billingMath.test.ts             # 6 tests: Integer paise tax math, intra/inter-state split, rounding, discounts, words
 └── components/
@@ -38,10 +44,14 @@ tests/
     ├── PosBilling.test.tsx                 # 5 tests: Register rendering, search & cart addition, stock limits, inter-state IGST, sale completion & print modal
     ├── Suppliers.test.tsx                  # 3 tests: Supplier directory, KPI metrics, Add Supplier modal, Vendor Khata running balance
     ├── Customers.test.tsx                  # 3 tests: Customer directory, KPI metrics, Register Customer modal, Customer Khata statement
-    └── Purchases.test.tsx                  # 4 tests: Purchases directory, Inward Goods modal with builder cart, View details, Pay bill modal
+    ├── Purchases.test.tsx                  # 4 tests: Purchases directory, Inward Goods modal with builder cart, View details, Pay bill modal
+    ├── Returns.test.tsx                    # 2 tests: Returns register, invoice lookup, line-item return modal with restock toggle
+    ├── Expenses.test.tsx                   # 2 tests: Expenses register, category manager, record expense modal
+    ├── Reports.test.tsx                    # 2 tests: Financial reporting tabs, date filtering, CSV export
+    └── Settings.test.tsx                   # 2 tests: Store profile, database backup creation, audit trail viewer, RBAC matrix
 ```
 
-**Total Active Test Count:** 99 automated tests passing across 18 test files with zero regressions.
+**Total Active Test Count:** 136 automated tests passing across 27 test files with zero regressions.
 
 ### Key Milestone 4 Test Cases:
 - **`billingMath.test.ts`:**

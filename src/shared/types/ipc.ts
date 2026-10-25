@@ -39,6 +39,29 @@ import {
   PaymentType,
   RecordSupplierPaymentInput,
   RecordCustomerPaymentInput,
+  SalesReturn,
+  CreateSalesReturnInput,
+  SalesReturnFilterQuery,
+  ExpenseCategory,
+  CreateExpenseCategoryInput,
+  Expense,
+  CreateExpenseInput,
+  UpdateExpenseInput,
+  ExpenseFilterQuery,
+  AuditLog,
+  AuditLogFilterQuery,
+  BackupMetadata,
+  VerifyBackupResult,
+  RestoreBackupResult,
+  ReportDateFilter,
+  SalesReportSummary,
+  PurchaseReportSummary,
+  ProfitLossReport,
+  InventoryValuationReport,
+  TaxSummaryReport,
+  PaymentRegisterSummary,
+  ShopSettings,
+  UpdateShopSettingsInput,
 } from './models';
 
 export type IpcResult<T> =
@@ -146,6 +169,50 @@ export interface IpcApi {
     }) => Promise<IpcResult<PaymentRecord[]>>;
     recordSupplierPayment: (data: RecordSupplierPaymentInput) => Promise<IpcResult<PaymentRecord>>;
     recordCustomerPayment: (data: RecordCustomerPaymentInput) => Promise<IpcResult<PaymentRecord>>;
+  };
+  returns: {
+    getAll: (filters?: SalesReturnFilterQuery) => Promise<IpcResult<SalesReturn[]>>;
+    getById: (id: number) => Promise<IpcResult<SalesReturn | null>>;
+    create: (data: CreateSalesReturnInput) => Promise<IpcResult<SalesReturn>>;
+    getNextNumber: () => Promise<IpcResult<string>>;
+  };
+  expenses: {
+    getCategories: () => Promise<IpcResult<ExpenseCategory[]>>;
+    createCategory: (data: CreateExpenseCategoryInput) => Promise<IpcResult<ExpenseCategory>>;
+    getAll: (filters?: ExpenseFilterQuery) => Promise<IpcResult<Expense[]>>;
+    getById: (id: number) => Promise<IpcResult<Expense | null>>;
+    create: (data: CreateExpenseInput) => Promise<IpcResult<Expense>>;
+    update: (data: UpdateExpenseInput) => Promise<IpcResult<Expense>>;
+    delete: (id: number) => Promise<IpcResult<boolean>>;
+    getNextNumber: () => Promise<IpcResult<string>>;
+  };
+  reports: {
+    getSalesReport: (filter: ReportDateFilter) => Promise<IpcResult<SalesReportSummary>>;
+    getPurchaseReport: (filter: ReportDateFilter) => Promise<IpcResult<PurchaseReportSummary>>;
+    getProfitLossReport: (filter: ReportDateFilter) => Promise<IpcResult<ProfitLossReport>>;
+    getInventoryValuationReport: () => Promise<IpcResult<InventoryValuationReport>>;
+    getTaxReport: (filter: ReportDateFilter) => Promise<IpcResult<TaxSummaryReport>>;
+    getPaymentsSummaryReport: (filter: ReportDateFilter) => Promise<IpcResult<PaymentRegisterSummary>>;
+    exportCsv: (reportType: string, filter?: ReportDateFilter) => Promise<IpcResult<{ csvContent: string; filename: string }>>;
+  };
+  backups: {
+    create: (notes?: string) => Promise<IpcResult<BackupMetadata>>;
+    getAll: () => Promise<IpcResult<BackupMetadata[]>>;
+    verify: (backupFilename: string) => Promise<IpcResult<VerifyBackupResult>>;
+    restore: (backupFilename: string) => Promise<IpcResult<RestoreBackupResult>>;
+  };
+  audit: {
+    getLogs: (filters?: AuditLogFilterQuery) => Promise<IpcResult<AuditLog[]>>;
+  };
+  systemSettings: {
+    get: () => Promise<IpcResult<ShopSettings>>;
+    update: (data: UpdateShopSettingsInput) => Promise<IpcResult<ShopSettings>>;
+  };
+  exportImport: {
+    exportProductsCsv: () => Promise<IpcResult<{ csvContent: string; filename: string }>>;
+    importProductsCsv: (csvContent: string) => Promise<IpcResult<{ importedCount: number; errors: string[] }>>;
+    exportCustomersCsv: () => Promise<IpcResult<{ csvContent: string; filename: string }>>;
+    exportSalesCsv: (filter?: ReportDateFilter) => Promise<IpcResult<{ csvContent: string; filename: string }>>;
   };
 }
 

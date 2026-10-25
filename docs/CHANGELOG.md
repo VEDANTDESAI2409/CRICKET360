@@ -4,6 +4,45 @@ All notable changes to the Cricket360 project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0-m6] - 2026-10-25
+### Added - Milestone 6: Returns, Expenses, Reports & Business Controls
+- **Sales Returns & Restocking Engine (`Returns.tsx`, `returnsRepo.ts`):**
+  - Full and partial sales return workflow with invoice lookup by number or customer.
+  - Returnable quantity bounds checking preventing over-returns and duplicate return submissions.
+  - Line-item proportional valuation, integer paise arithmetic, and return reason capture.
+  - Physical restocking switch per line item (`restock: boolean`): restores variant and parent product inventory only when physical goods are accepted back into stock, writing immutable `stock_movements` with `movement_type = 'SALE_RETURN'`.
+  - Multiple refund mechanisms: Cash, UPI, Card, Bank Transfer, and Store Credit.
+  - Automatic customer Khata debit adjustment for credit sales.
+  - Automatic invoice status progression to `RETURNED` when all items are returned.
+- **Operating Expense Management (`Expenses.tsx`, `expenseRepo.ts`):**
+  - Standard expense categories (Rent, Salaries, Utilities, Transport & Logistics, Repairs & Maintenance, Marketing, Miscellaneous) plus custom category creation.
+  - Sequential expense numbering (`EXP-YYYYMM-XXXX`) and draft/pending/paid status tracking.
+  - Amount in integer paise, payment method, payee/supplier link, and expense notes.
+  - Distinct separation from inventory purchases and customer refunds to eliminate double counting.
+- **Financial Reports & Business Analytics (`Reports.tsx`, `reportsRepo.ts`):**
+  - Date-filtered reports for Sales (Gross sales, item discounts, bill discounts, returns, net revenue).
+  - Purchases and Vendor Returns summary.
+  - Profit & Loss statement with Cost of Goods Sold (COGS) based on Weighted Landed Cost, distinguishing Gross Margin % from Net Operating Profit % (deducting operating expenses).
+  - Live Stock Valuation across catalog variants and standalone items with total units.
+  - GST & HSN Tax summary: outward GSTR-1 liability vs inward ITC on purchases across CGST, SGST, and IGST without unsupported tax claims.
+  - Cash Flow Register: cash/UPI/card/bank reconciliation across sales, customer payments, vendor payouts, expenses, and refunds.
+  - RFC 4180 CSV Export across all reports with human-readable rupee formatting.
+- **Business Controls, Safe Backups & Audit Trail (`Settings.tsx`, `backupService.ts`, `auditRepo.ts`, `exportImportService.ts`):**
+  - Role-Based Access Control matrix (`ADMIN`, `CASHIER`, `STAFF`) with granular permissions.
+  - Tamper-evident `audit_logs` tracking sensitive system actions with user attribution, entity snapshots, and JSON diffs.
+  - Online database backups via SQLite `VACUUM INTO` with collision-safe unique filenames.
+  - Backup integrity verification: SHA-256 hash validation, SQLite format 3 magic header checks, and `PRAGMA integrity_check`.
+  - Automated safety snapshot before database restore (`PRE_RESTORE_`) to guard against corrupted or invalid backup files.
+  - Safe CSV data export (Products, Customers, Sales) and bulk Product catalog import with automatic SKU/barcode generation.
+  - Shop settings profile editor with GSTIN, address, state code, receipt headers/footers, and print preferences.
+- **Database Migration `006_returns_expenses_and_controls.sql`:**
+  - Created tables: `sales_returns`, `sales_return_items`, `expense_categories`, `expenses`, `audit_logs`, `backup_metadata`.
+  - Seeded default categories and numbering sequences.
+- **Testing & Verification:**
+  - 37 new tests added (5 in `returnsRepo.test.ts`, 6 in `expenseRepo.test.ts`, 7 in `reportsRepo.test.ts`, 4 in `backupService.test.ts`, 7 in `m6Validation.test.ts`, 2 in `Returns.test.tsx`, 2 in `Expenses.test.tsx`, 2 in `Reports.test.tsx`, 2 in `Settings.test.tsx`).
+  - Total automated test suite now at 136 passing tests across 27 test files.
+  - Passed `npm run typecheck`, `npm test`, `npm run build`, and `npm run smoke-test`.
+
 ## [1.0.0-m5] - 2026-10-25
 ### Added - Combined Milestone 5: Procurement, Supplier Management & Customer Accounts
 - **Phase A: Suppliers & Procurement Module (`Suppliers.tsx`, `Purchases.tsx`):**

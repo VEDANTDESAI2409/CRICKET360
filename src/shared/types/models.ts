@@ -671,3 +671,376 @@ export interface DaySalesSummary {
   salesAmountPaise: number;
   invoiceCount: number;
 }
+
+// ==========================================
+// Milestone 6: Sales Returns & Refunds
+// ==========================================
+
+export interface SalesReturnItem {
+  id: number;
+  sales_return_id: number;
+  sales_invoice_item_id: number;
+  product_id: number;
+  variant_id?: number | null;
+  product_name_snapshot: string;
+  variant_name_snapshot?: string | null;
+  sku_snapshot: string;
+  quantity: number;
+  unit_price_paise: number;
+  discount_amount_paise: number;
+  taxable_amount_paise: number;
+  tax_rate_percent: number;
+  cgst_amount_paise: number;
+  sgst_amount_paise: number;
+  igst_amount_paise: number;
+  total_amount_paise: number;
+  restock: number;
+  created_at: string;
+}
+
+export interface SalesReturn {
+  id: number;
+  return_number: string;
+  invoice_id: number;
+  invoice_number?: string;
+  customer_id?: number | null;
+  customer_name_snapshot: string;
+  return_date: string;
+  taxable_amount_paise: number;
+  cgst_amount_paise: number;
+  sgst_amount_paise: number;
+  igst_amount_paise: number;
+  total_tax_paise: number;
+  round_off_paise: number;
+  grand_total_paise: number;
+  refund_mode: 'CASH' | 'UPI' | 'CARD' | 'BANK_TRANSFER' | 'STORE_CREDIT';
+  refund_reference?: string | null;
+  reason: string;
+  notes?: string | null;
+  user_id?: number | null;
+  created_at: string;
+  items?: SalesReturnItem[];
+}
+
+export interface CreateSalesReturnItemInput {
+  sales_invoice_item_id: number;
+  quantity: number;
+  restock: boolean;
+}
+
+export interface CreateSalesReturnInput {
+  invoice_id: number;
+  return_date: string;
+  refund_mode: 'CASH' | 'UPI' | 'CARD' | 'BANK_TRANSFER' | 'STORE_CREDIT';
+  refund_reference?: string | null;
+  reason: string;
+  notes?: string | null;
+  items: CreateSalesReturnItemInput[];
+}
+
+export interface SalesReturnFilterQuery {
+  search?: string;
+  start_date?: string;
+  end_date?: string;
+  customer_id?: number;
+}
+
+// ==========================================
+// Milestone 6: Expense Management
+// ==========================================
+
+export interface ExpenseCategory {
+  id: number;
+  name: string;
+  code: string;
+  description?: string | null;
+  is_active: number;
+  created_at: string;
+}
+
+export interface CreateExpenseCategoryInput {
+  name: string;
+  code: string;
+  description?: string | null;
+}
+
+export interface Expense {
+  id: number;
+  expense_number: string;
+  category_id: number;
+  category_name?: string;
+  category_code?: string;
+  expense_date: string;
+  amount_paise: number;
+  payment_mode: PaymentMode;
+  payment_status: 'PAID' | 'PENDING' | 'DRAFT';
+  payee_name?: string | null;
+  supplier_id?: number | null;
+  supplier_name?: string | null;
+  reference_number?: string | null;
+  notes?: string | null;
+  user_id?: number | null;
+  created_at: string;
+  updated_at?: string | null;
+}
+
+export interface CreateExpenseInput {
+  category_id: number;
+  expense_date: string;
+  amount_paise: number;
+  payment_mode: PaymentMode;
+  payment_status?: 'PAID' | 'PENDING' | 'DRAFT';
+  payee_name?: string | null;
+  supplier_id?: number | null;
+  reference_number?: string | null;
+  notes?: string | null;
+}
+
+export interface UpdateExpenseInput {
+  id: number;
+  category_id?: number;
+  expense_date?: string;
+  amount_paise?: number;
+  payment_mode?: PaymentMode;
+  payment_status?: 'PAID' | 'PENDING' | 'DRAFT';
+  payee_name?: string | null;
+  supplier_id?: number | null;
+  reference_number?: string | null;
+  notes?: string | null;
+}
+
+export interface ExpenseFilterQuery {
+  search?: string;
+  category_id?: number;
+  payment_status?: 'PAID' | 'PENDING' | 'DRAFT';
+  payment_mode?: PaymentMode;
+  start_date?: string;
+  end_date?: string;
+}
+
+// ==========================================
+// Milestone 6: Audit Logs
+// ==========================================
+
+export interface AuditLog {
+  id: number;
+  action: string;
+  entity_type: string;
+  entity_id?: string | null;
+  details_json?: string | null;
+  user_id?: number | null;
+  username_snapshot?: string | null;
+  created_at: string;
+}
+
+export interface CreateAuditLogInput {
+  action: string;
+  entity_type: string;
+  entity_id?: string | null;
+  details_json?: string | null;
+  user_id?: number | null;
+  username_snapshot?: string | null;
+}
+
+export interface AuditLogFilterQuery {
+  action?: string;
+  entity_type?: string;
+  start_date?: string;
+  end_date?: string;
+  limit?: number;
+}
+
+// ==========================================
+// Milestone 6: Database Backup & Restore
+// ==========================================
+
+export interface BackupMetadata {
+  id: number;
+  backup_filename: string;
+  file_path: string;
+  file_size_bytes: number;
+  sha256_hash: string;
+  backup_type: 'MANUAL' | 'SCHEDULED' | 'PRE_RESTORE';
+  status: 'VALID' | 'RESTORED' | 'CORRUPTED';
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface CreateBackupResult {
+  success: boolean;
+  backup?: BackupMetadata;
+  error?: string;
+}
+
+export interface VerifyBackupResult {
+  isValid: boolean;
+  sha256Matched: boolean;
+  sqliteIntegrityOk: boolean;
+  fileSizeBytes: number;
+  message: string;
+}
+
+export interface RestoreBackupResult {
+  success: boolean;
+  preRestoreBackupPath?: string;
+  restoredFrom: string;
+  error?: string;
+}
+
+// ==========================================
+// Milestone 6: Reports & Business Analytics
+// ==========================================
+
+export interface ReportDateFilter {
+  start_date: string;
+  end_date: string;
+}
+
+export interface SalesReportSummary {
+  startDate: string;
+  endDate: string;
+  totalInvoicesCount: number;
+  grossSalesPaise: number;
+  totalDiscountsPaise: number;
+  returnsAmountPaise: number;
+  netSalesPaise: number;
+  taxableAmountPaise: number;
+  cgstPaise: number;
+  sgstPaise: number;
+  igstPaise: number;
+  totalTaxPaise: number;
+  roundOffPaise: number;
+  paymentBreakdown: Record<string, number>;
+  dailyTrend: Array<{
+    date: string;
+    invoiceCount: number;
+    netSalesPaise: number;
+  }>;
+}
+
+export interface PurchaseReportSummary {
+  startDate: string;
+  endDate: string;
+  totalPurchasesCount: number;
+  totalInwardCostPaise: number;
+  returnsAmountPaise: number;
+  netPurchasesPaise: number;
+  totalTaxPaidPaise: number;
+  unpaidDuesPaise: number;
+}
+
+export interface ProfitLossReport {
+  startDate: string;
+  endDate: string;
+  costingMethod: 'WEIGHTED_LANDED_COST';
+  grossRevenuePaise: number;
+  discountsPaise: number;
+  returnsPaise: number;
+  netRevenuePaise: number;
+  cogsPaise: number;
+  grossProfitPaise: number;
+  grossMarginPercent: number;
+  operatingExpensesPaise: number;
+  expensesByCategory: Array<{
+    categoryName: string;
+    amountPaise: number;
+  }>;
+  netOperatingProfitPaise: number;
+  netMarginPercent: number;
+}
+
+export interface InventoryValuationReport {
+  totalStockUnits: number;
+  totalCostValuationPaise: number;
+  totalRetailValuationPaise: number;
+  potentialGrossProfitPaise: number;
+  categoryBreakdown: Array<{
+    categoryName: string;
+    units: number;
+    costValuationPaise: number;
+    retailValuationPaise: number;
+  }>;
+  lowStockCount: number;
+  outOfStockCount: number;
+}
+
+export interface TaxSummaryReport {
+  startDate: string;
+  endDate: string;
+  b2bSales: Array<{
+    customerName: string;
+    gstin: string;
+    invoiceNumber: string;
+    invoiceDate: string;
+    taxableAmountPaise: number;
+    cgstPaise: number;
+    sgstPaise: number;
+    igstPaise: number;
+    totalPaise: number;
+  }>;
+  b2cIntraStateTaxablePaise: number;
+  b2cIntraStateTaxPaise: number;
+  b2cInterStateTaxablePaise: number;
+  b2cInterStateTaxPaise: number;
+  hsnSummary: Array<{
+    hsnCode: string;
+    description: string;
+    taxRatePercent: number;
+    totalQuantity: number;
+    taxableAmountPaise: number;
+    cgstPaise: number;
+    sgstPaise: number;
+    igstPaise: number;
+    totalTaxPaise: number;
+  }>;
+  totalOutputTaxPaise: number;
+  totalInputTaxPaise: number;
+}
+
+export interface PaymentRegisterSummary {
+  startDate: string;
+  endDate: string;
+  totalInflowsPaise: number;
+  totalOutflowsPaise: number;
+  netCashFlowPaise: number;
+  inflowsByMode: Record<string, number>;
+  outflowsByMode: Record<string, number>;
+}
+
+// ==========================================
+// Milestone 6: System Settings & Shop Details
+// ==========================================
+
+export interface ShopSettings {
+  shop_name: string;
+  shop_address: string;
+  shop_phone: string;
+  shop_email: string;
+  shop_gstin: string;
+  shop_state_code: string;
+  invoice_prefix: string;
+  next_invoice_number: string;
+  thermal_printer_name: string;
+  thermal_receipt_width: string;
+  currency_symbol: string;
+  store_terms_and_conditions?: string;
+  auto_backup_enabled?: string;
+  auto_backup_retention_days?: string;
+  low_stock_warning_threshold?: string;
+}
+
+export interface UpdateShopSettingsInput {
+  shop_name: string;
+  shop_address: string;
+  shop_phone: string;
+  shop_email: string;
+  shop_gstin: string;
+  shop_state_code: string;
+  invoice_prefix: string;
+  thermal_printer_name?: string;
+  thermal_receipt_width?: string;
+  store_terms_and_conditions?: string;
+  auto_backup_enabled?: string;
+  auto_backup_retention_days?: string;
+  low_stock_warning_threshold?: string;
+}

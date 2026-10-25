@@ -23,9 +23,10 @@ The sidebar is organized into functional sections:
 - **Customers (Khata):** Customer directory, credit limits, outstanding receivables, Khata statement, and payment collection (Active - Combined Milestone 5).
 - **Suppliers:** Supplier directory, contact information, GSTIN, payment terms, and vendor running ledger (Active - Combined Milestone 5).
 - **Payments:** Unified financial register for tracking inflows (sales, receipts) and outflows (vendor payouts) (Active - Combined Milestone 5).
-- **Reports & GST:** Daily sales registers, GSTR-1 summaries, category performance, and profit estimation (Planned Milestone 8).
-- **Expenses:** Petty cash and operating expense recording (shop rent, electricity, maintenance) (Planned Milestone 8).
-- **Settings:** Business profile, GSTIN, invoice numbering prefixes, thermal printer configuration, and database backups.
+- **Sales Returns:** Process customer returns against sales invoices, condition-based restocking, refund methods, and Khata credit adjustments (Active - Milestone 6).
+- **Expenses:** Petty cash and operating expense recording across categories (rent, electricity, salaries, transport) (Active - Milestone 6).
+- **Reports & GST:** Multi-tab financial reports (Sales, Purchases, P&L with COGS, Stock Valuation, GST/HSN, Cash Flow) with RFC 4180 CSV export (Active - Milestone 6).
+- **Settings:** Shop profile, receipt customization, online database backup/restore, CSV data export/import, audit log viewer, and role permissions (Active - Milestone 6).
 
 ---
 
@@ -256,4 +257,119 @@ The dashboard provides real-time visibility into inventory levels, sales revenue
    - **Outflows:** Supplier payouts and bill disbursements.
 3. Filter by Party Type (`Customer` vs `Supplier`), Payment Mode (`Cash`, `UPI`, `Card`, `Bank Transfer`), or search by reference number.
 4. Audit all transactions with verified party name snapshots and receipt numbers.
+
+---
+
+## 11. Sales Returns & Refunds (Milestone 6)
+
+### 11.1 Processing a Sales Return
+1. Navigate to **Sales Returns** in the left sidebar.
+2. Click **+ Process Return**.
+3. Search for the original sales invoice by invoice number (e.g. `CR360-1001`) or customer name.
+4. The system displays all line items on the invoice with previously returned quantities and maximum returnable quantity.
+5. For each item to be returned:
+   - Enter the return quantity (cannot exceed the remaining returnable quantity).
+   - Toggle **Restock to Inventory** ON if the item is physically acceptable for resale; leave OFF if defective or damaged. Only restocked items increment warehouse/variant stock and generate `SALE_RETURN` stock ledger entries.
+6. Select the **Return Reason** (e.g. `Wrong Size / Fit`, `Defective / Damaged`, `Customer Changed Mind`, `Incorrect Item Sold`, or `Other`).
+7. Choose the **Refund Method**:
+   - `CASH`: Immediate cash disbursement from counter drawer.
+   - `UPI`: Instant UPI refund transfer.
+   - `CARD`: Credit card refund reversal.
+   - `BANK_TRANSFER`: Direct account transfer.
+   - `STORE_CREDIT`: Issued as store credit note.
+   - If the original invoice had an unpaid balance on a customer's Khata account, the return automatically adjusts the customer's outstanding balance downwards.
+8. Click **Confirm Return & Process Refund**:
+   - Sequential return number is generated (`SR-YYYYMM-XXXX`).
+   - Line items, restock events, and payments are committed in an atomic database transaction.
+   - If all items on the invoice have been returned, the invoice status updates to `RETURNED`.
+
+### 11.2 Returns Directory & Detail Inspection
+- View all historical returns in the table with return number, invoice reference, customer, return reason, restocked item counts, and refund amounts.
+- Click **View Details** on any return to inspect the itemized return breakdown, restocking decisions, and refund method.
+
+---
+
+## 12. Operating Expense Management (Milestone 6)
+
+### 12.1 Recording an Expense
+1. Navigate to **Expenses** in the left sidebar.
+2. Click **+ Record Expense**.
+3. Select an expense category (e.g. Rent, Salaries, Utilities, Transport & Logistics, Repairs & Maintenance, Marketing, Miscellaneous).
+4. Enter the amount in Rupees, expense date, payment method, and payment status (`PAID`, `PENDING`, `DRAFT`).
+5. (Optional) Select a linked supplier/payee and provide reference numbers or notes.
+6. Click **Save Expense**:
+   - Sequential identifier (`EXP-YYYYMM-XXXX`) is assigned.
+   - Expense is immediately reflected in expense registers and financial reports without double counting inventory procurement.
+
+### 12.2 Managing Expense Categories
+1. In the Expenses screen, click **Manage Categories**.
+2. View existing active categories and their standard codes.
+3. Click **+ Add Category** to create custom categories (e.g., `OFFICE_SUPPLIES`, `LEGAL_FEES`).
+
+---
+
+## 13. Financial Reports & Analytics (Milestone 6)
+
+Cricket360 provides real-time, date-filtered business analytics that reconcile strictly with underlying invoices, returns, payments, and inventory ledgers:
+
+### 13.1 Report Modules
+- **Sales & Returns Report:**
+  - Gross sales revenue, line-item discounts, invoice-level discounts, customer returns deductions, net sales revenue, and tax collected.
+  - Itemized register of all completed, cancelled, and returned invoices with payment modes.
+- **Purchases & Vendor Returns Report:**
+  - Total purchase orders, gross purchases, purchase returns, and net purchase cost.
+- **Profit & Loss Statement (Operating Results):**
+  - **Net Revenue:** Net sales after returns.
+  - **Cost of Goods Sold (COGS):** Calculated using `WEIGHTED_LANDED_COST` based on actual inventory purchase receipts.
+  - **Gross Profit & Gross Margin %:** `Gross Profit = Net Revenue - COGS`.
+  - **Operating Expenses:** Summarized operating expenses across all categories.
+  - **Net Operating Profit & Margin %:** Clearly separates trading gross margin from net operating profit after deducting store overheads.
+- **Stock Valuation & Quantities:**
+  - Real-time catalog valuation (`stock_quantity * purchase_cost`) across all active variants and standalone products.
+  - Identifies out-of-stock and low-stock items with reorder level alerts.
+- **GST & HSN Tax Summary:**
+  - Reconciles outward liability (GSTR-1 output tax on sales minus returns) against inward Input Tax Credit (ITC on purchases minus purchase returns) across CGST, SGST, and IGST without unsupported tax claims.
+- **Cash Flow Register:**
+  - Comprehensive monetary reconciliation across Cash, UPI, Card, and Bank accounts.
+  - Displays Total Inflows (sales + customer debt collections) vs Total Outflows (vendor payouts + operating expenses + customer refunds).
+
+### 13.2 Exporting Reports to CSV
+1. Select the desired date range (Today, This Week, This Month, This Fiscal Year, or Custom Range).
+2. Click **Export CSV** on any active report tab.
+3. The file is saved in RFC 4180 standard CSV format with rupee values formatted for analysis in Excel or Google Sheets.
+
+---
+
+## 14. System Administration & Business Controls (Milestone 6)
+
+### 14.1 Store Profile & Receipt Settings
+1. Navigate to **Settings** in the left sidebar.
+2. In the **Shop Profile & Receipts** tab, configure:
+   - Store Name, Contact Phone, Support Email, and Physical Address.
+   - GSTIN (15-character Indian Goods and Services Tax Identification Number) and 2-digit State Code.
+   - Receipt Header Note and Receipt Footer Note (e.g. return policy, thank you message).
+   - Default receipt format (80mm Thermal Receipt vs A4 Tax Invoice).
+3. Click **Save Settings** to persist changes.
+
+### 14.2 Database Backup & Restore
+1. In the **Database Backup & Restore** tab:
+   - Click **Create Backup Now** to trigger an instant SQLite `VACUUM INTO` online snapshot.
+   - The backup engine computes an SHA-256 integrity hash and logs the snapshot in `backup_metadata`.
+2. To restore a backup:
+   - Click **Restore** next to any backup file in the backup history list.
+   - The system verifies the SQLite format 3 magic header and performs `PRAGMA integrity_check`.
+   - An automatic pre-restore backup snapshot (`PRE_RESTORE_`) is taken of the current database before replacement.
+   - The database is safely re-initialized and connections restarted.
+
+### 14.3 Data Export & Bulk Catalog Import
+1. In the **Data Sync & Export** tab:
+   - Export Products, Customers, or Sales Invoices as standardized CSV files.
+   - Bulk import products from a CSV spreadsheet (supports columns: `name`, `category`, `brand`, `unit`, `hsn_code`, `purchase_cost`, `selling_price`, `mrp`, `stock_quantity`, `sku`, `barcode`). Missing SKUs and barcodes are automatically synthesized.
+
+### 14.4 Security Audit Trail & Role Permissions
+1. **Security Audit Trail:**
+   - Real-time immutable event log tracking sensitive actions: `SALE_RETURN`, `EXPENSE_CREATE`, `SETTINGS_UPDATE`, `BACKUP_CREATE`, `DATABASE_RESTORE`, `DATA_IMPORT`, `INVOICE_CANCEL`.
+   - Records timestamp, action, entity name, entity ID, and detailed JSON diff.
+2. **Role-Based Access Control (RBAC):**
+   - Review permissions across `ADMIN`, `CASHIER`, and `STAFF` roles covering POS Billing, Catalog Management, Inventory Adjustments, Procurement, Expenses, Reports, Backups, and Settings.
 

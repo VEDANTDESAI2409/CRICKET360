@@ -107,9 +107,14 @@ The IPC layer is organized into modular channels:
 - `suppliers:getAll` / `suppliers:getById` / `suppliers:create` / `suppliers:update` / `suppliers:getLedger` - Supplier directory, payment terms, and vendor running ledger.
 - `purchases:getAll` / `purchases:getById` / `purchases:create` / `purchases:createReturn` - Purchase bills inwarding, tax breakdown, duplicate supplier invoice validation, and purchase returns.
 - `payments:recordCustomerPayment` / `payments:recordSupplierPayment` / `payments:getAll` - Full/partial payment recording against sales/purchase invoices, balance adjustments, and unified payment register.
-- `db:reports:*` - GST summaries, sales reports, inventory valuations (Milestone 8).
+- `returns:searchInvoices` / `returns:getReturnableItems` / `returns:createReturn` / `returns:getAll` / `returns:getById` - Sales returns workflow, partial/full item return verification, physical restocking ledger, and refund settlements.
+- `expenses:getCategories` / `expenses:createCategory` / `expenses:getAll` / `expenses:getById` / `expenses:create` / `expenses:update` / `expenses:delete` - Operating expense lifecycle, categorized expenditure, and payee tracking.
+- `reports:getSalesReport` / `reports:getPurchasesReport` / `reports:getProfitLossReport` / `reports:getStockValuationReport` / `reports:getGstReport` / `reports:getCashFlowReport` / `reports:exportCsv` - Comprehensive financial and operational reports with CSV export.
+- `system:backup:create` / `system:backup:list` / `system:backup:restore` / `system:backup:verify` - Atomic online database backups, SHA-256 verification, and pre-restore snapshots.
+- `system:export:data` / `system:import:products` - CSV bulk data export and product catalog import.
+- `audit:getLogs` - Tamper-resistant system audit trail.
+- `settings:getShopSettings` / `settings:updateShopSettings` - Shop profile snapshot, tax header configuration, and receipt customization.
 - `system:print:*` - Silent printing to thermal or default printer, A4 print preview.
-- `system:backup:*` - Manual backup generation, database restore, integrity checks (Milestone 9).
 
 ### 4.1 Transactional Guarantees for Billing, Catalog & Stock Operations
 All stock mutations and billing workflows execute within synchronous `db.transaction()` boundaries:
@@ -156,6 +161,42 @@ All stock mutations and billing workflows execute within synchronous `db.transac
    - Full audit trail: posted payments are immutable and recorded in a unified register (`payments` table with `payment_type` discriminator: `SALE_INVOICE`, `CUSTOMER_PAYMENT`, `SUPPLIER_PAYOUT`).
    - Chronological running balances in customer Khata and supplier statements guarantee `Debits - Credits = Current Balance`.
 
+
+### 4.3 Returns, Costing, Operating Expenses & Business Controls (Milestone 6)
+1. **Sales Returns & Stock Restitution Engine:**
+   - Full and partial returns are supported against any completed sales invoice (`sales_returns` and `sales_return_items`).
+   - Line-item proportional valuation: `propTotal = Math.round((invItem.total_amount_paise * qty) / invItem.quantity)`.
+   - Restock decision per line item: Stock is restored to variant and parent product if and only if `restock: true` is indicated. When physically restocked, an immutable ledger entry is written with `movement_type = 'SALE_RETURN'`. Damaged/defective goods physically written off do not artificially inflate inventory.
+   - Refund treatments: Supports `CASH`, `UPI`, `CARD`, `BANK_TRANSFER`, and `STORE_CREDIT`.
+   - Customer Khata reconciliation: Credit sales automatically reduce the customer's outstanding balance (`customers.balance_paise`), preventing phantom receivables.
+   - Invoice status progression: When cumulative returned quantities equal original invoiced quantities, the sales invoice is transitioned to `RETURNED`.
+2. **Operating Expense Management:**
+   - Sequential identifier generation (`EXP-YYYYMM-XXXX`) for distinct auditability.
+   - Standard retail categories: Rent, Salaries, Utilities, Logistics, Maintenance, Marketing, and Miscellaneous.
+   - Distinct classification of operating cash outflows, preventing double counting against inventory purchase payouts or refund transactions.
+   - Status tracking (`PAID`, `PENDING`, `DRAFT`) with payment mode attribution.
+3. **Financial Costing & Reporting Architecture:**
+   - **Cost of Goods Sold (COGS):** Calculated via `WEIGHTED_LANDED_COST` utilizing historical purchase inward rates.
+   - **Gross Margin vs Net Operating Profit:** Clean separation in all calculations:
+     - Gross Profit = Net Revenue - COGS
+     - Gross Margin % = (Gross Profit / Net Revenue) * 100
+     - Net Operating Profit = Gross Profit - Operating Expenses
+     - Net Margin % = (Net Operating Profit / Net Revenue) * 100
+   - **GST & HSN Tax Accounting:** Reconciles outward liability (GSTR-1 output tax on sales minus returns) against inward Input Tax Credit (ITC on purchases minus purchase returns) across CGST, SGST, and IGST components without unsupported tax assumptions.
+   - **Live Stock Valuation:** Dynamically rolls up quantities multiplied by purchase landed cost across all variants and standalone catalog items.
+   - **Cash Flow Register:** Real-time inflow (cash sales, customer debt payments) vs outflow (vendor payments, operating expenses, cash refunds) reconciliation.
+4. **Business Controls, Safe Backups & Audit Trail:**
+   - **Role-Based Access Control (RBAC):** Configured permission matrix across `ADMIN`, `CASHIER`, and `STAFF` roles covering POS sales, returns, purchases, expenses, reports, backups, settings, and product editing.
+   - **Audit Trail:** Tamper-evident `audit_logs` record `user_id`, `action`, `entity_name`, `entity_id`, and snapshot `details_json` for critical operations (returns, expenses, adjustments, cancellations, settings changes, backups, data imports).
+   - **Safe Database Backup & Restore (`BackupService`):**
+     - Live online snapshot via SQLite `VACUUM INTO` ensuring zero lockup during store operations.
+     - Unique, collision-free filename generation with millisecond timestamps and entropy tags.
+     - SHA-256 hash generation and verification.
+     - Pre-restore verification: SQLite magic header inspection (`SQLite format 3`) and `PRAGMA integrity_check`.
+     - Automatic pre-restore snapshot (`PRE_RESTORE_`) created before replacing live database, preventing destructive overwrites.
+   - **Safe Data Sync (`ExportImportService`):**
+     - CSV export for Products, Customers, and Sales History with quoted RFC 4180 format.
+     - Bulk Product Import with validation, automatic SKU/barcode synthesis for missing identifiers, and integer paise conversion.
 
 ---
 

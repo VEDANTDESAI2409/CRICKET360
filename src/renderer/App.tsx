@@ -9,29 +9,23 @@ import { Purchases } from './features/purchases/Purchases';
 import { Suppliers } from './features/suppliers/Suppliers';
 import { Customers } from './features/customers/Customers';
 import { PaymentsRegister } from './features/payments/PaymentsRegister';
-import { Card } from './components/Card';
+import { Returns } from './features/returns/Returns';
+import { Expenses } from './features/expenses/Expenses';
+import { Reports } from './features/reports/Reports';
+import { Settings } from './features/settings/Settings';
 import { Button } from './components/Button';
 import {
   AppInfo,
-  DatabaseStats,
-  HealthCheckResult,
   ProductWithDetails,
 } from '../shared/types/models';
-import { FileCode2, ArrowLeft } from 'lucide-react';
+import { FileCode2 } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [currentModule, setCurrentModule] = useState<NavModule>('dashboard');
   const [appInfo, setAppInfo] = useState<AppInfo | null>(null);
-  const [stats, setStats] = useState<DatabaseStats | null>(null);
-  const [health, setHealth] = useState<HealthCheckResult | null>(null);
   const [lowStockCount, setLowStockCount] = useState<number>(0);
   const [globalSearch, setGlobalSearch] = useState<string>('');
   const [productForAdjustment, setProductForAdjustment] = useState<ProductWithDetails | null>(null);
-
-  // Settings testing state
-  const [settingKey, setSettingKey] = useState<string>('store_tagline');
-  const [settingVal, setSettingVal] = useState<string>('Premium Cricket Gear & Equipment');
-  const [settingSavedMsg, setSettingSavedMsg] = useState<string>('');
 
   const loadSystemInfo = async () => {
     if (!window.api) {
@@ -44,36 +38,17 @@ export const App: React.FC = () => {
         walEnabled: true,
         foreignKeysEnabled: true,
       });
-      setStats({
-        categoryCount: 6,
-        brandCount: 8,
-        productCount: 6,
-        customerCount: 1,
-        supplierCount: 1,
-        migrationVersion: '003_catalog_and_inventory',
-      });
-      setHealth({
-        status: 'HEALTHY',
-        foreignKeys: true,
-        journalMode: 'wal',
-        integrity: 'ok',
-        timestamp: new Date().toISOString(),
-      });
       setLowStockCount(2);
       return;
     }
 
     try {
-      const [infoRes, statsRes, healthRes, metricsRes] = await Promise.all([
+      const [infoRes, metricsRes] = await Promise.all([
         window.api.app.getInfo(),
-        window.api.db.getStats(),
-        window.api.app.getHealthCheck(),
         window.api.dashboard.getMetrics(),
       ]);
 
       if (infoRes.success) setAppInfo(infoRes.data);
-      if (statsRes.success) setStats(statsRes.data);
-      if (healthRes.success) setHealth(healthRes.data);
       if (metricsRes.success) {
         setLowStockCount(metricsRes.data.lowStockCount);
       }
@@ -108,19 +83,6 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  const handleSaveSetting = async () => {
-    if (!window.api) return;
-    try {
-      const res = await window.api.settings.set(settingKey, settingVal);
-      if (res.success) {
-        setSettingSavedMsg('Setting saved successfully to SQLite database!');
-        setTimeout(() => setSettingSavedMsg(''), 3000);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
   const getModuleMeta = (mod: NavModule) => {
     switch (mod) {
@@ -264,133 +226,16 @@ export const App: React.FC = () => {
             <Customers />
           ) : currentModule === 'payments' ? (
             <PaymentsRegister />
+          ) : currentModule === 'returns' ? (
+            <Returns />
+          ) : currentModule === 'expenses' ? (
+            <Expenses />
+          ) : currentModule === 'reports' ? (
+            <Reports />
           ) : currentModule === 'settings' ? (
-            /* Settings Panel */
-            <div className="max-w-4xl mx-auto space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-xl font-bold text-retail-text">Settings & System Info</h1>
-                  <p className="text-xs text-retail-muted">
-                    Database configuration, persistent store settings, and engine diagnostics.
-                  </p>
-                </div>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  icon={<ArrowLeft size={14} />}
-                  onClick={() => setCurrentModule('dashboard')}
-                >
-                  Back to Dashboard
-                </Button>
-              </div>
-
-              {/* SQLite Read / Write Test */}
-              <Card
-                title="Store Settings & Persistence Test"
-                subtitle="Verifies round-trip IPC read/write directly to local SQLite database"
-              >
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-semibold text-retail-text mb-1 uppercase tracking-wider">
-                        Setting Key
-                      </label>
-                      <input
-                        type="text"
-                        value={settingKey}
-                        onChange={(e) => setSettingKey(e.target.value)}
-                        className="w-full text-xs font-mono p-2.5 rounded-lg border border-retail-border bg-retail-bg focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-retail-text mb-1 uppercase tracking-wider">
-                        Setting Value
-                      </label>
-                      <input
-                        type="text"
-                        value={settingVal}
-                        onChange={(e) => setSettingVal(e.target.value)}
-                        className="w-full text-xs p-2.5 rounded-lg border border-retail-border bg-white focus:outline-none focus:ring-2 focus:ring-brand-primary/20"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 pt-2">
-                    <Button variant="primary" size="sm" onClick={handleSaveSetting}>
-                      Save to SQLite via IPC
-                    </Button>
-                    {settingSavedMsg && (
-                      <span className="text-xs font-semibold text-emerald-700">
-                        {settingSavedMsg}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </Card>
-
-              {/* Engine Architecture & Diagnostics */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card
-                  title="Database Diagnostics"
-                  subtitle="WAL mode and transaction integrity"
-                >
-                  <div className="space-y-2.5 text-xs">
-                    <div className="flex justify-between py-1.5 border-b border-retail-border">
-                      <span className="text-retail-muted">Journal Mode:</span>
-                      <span className="font-bold text-brand-primary uppercase">
-                        {health?.journalMode || 'WAL'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-1.5 border-b border-retail-border">
-                      <span className="text-retail-muted">Foreign Keys:</span>
-                      <span className="font-bold text-emerald-700">
-                        {health?.foreignKeys ? 'ENABLED (Strict)' : 'DISABLED'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-1.5 border-b border-retail-border">
-                      <span className="text-retail-muted">Integrity Check:</span>
-                      <span className="font-bold text-emerald-700">
-                        {health?.integrity === 'ok' ? 'PASSED (OK)' : health?.integrity}
-                      </span>
-                    </div>
-                    <div className="flex justify-between py-1.5 border-b border-retail-border">
-                      <span className="text-retail-muted">Migration Level:</span>
-                      <span className="font-mono text-retail-text">
-                        {stats?.migrationVersion || '003_catalog_and_inventory'}
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-
-                <Card
-                  title="Process Isolation & Security"
-                  subtitle="Electron contextBridge parameters"
-                >
-                  <div className="space-y-2.5 text-xs">
-                    <div className="flex justify-between py-1.5 border-b border-retail-border">
-                      <span className="text-retail-muted">Context Isolation:</span>
-                      <span className="font-bold text-emerald-700">ENABLED</span>
-                    </div>
-                    <div className="flex justify-between py-1.5 border-b border-retail-border">
-                      <span className="text-retail-muted">Node Integration:</span>
-                      <span className="font-bold text-emerald-700">DISABLED (Isolated)</span>
-                    </div>
-                    <div className="flex justify-between py-1.5 border-b border-retail-border">
-                      <span className="text-retail-muted">Financial Precision:</span>
-                      <span className="font-semibold text-retail-text">Paise (1 INR = 100)</span>
-                    </div>
-                    <div className="flex justify-between py-1.5 border-b border-retail-border">
-                      <span className="text-retail-muted">Packaging Status:</span>
-                      <span className="font-mono text-retail-text">
-                        {appInfo?.isPackaged ? 'Packaged EXE' : 'Dev Unpackaged'}
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              </div>
-            </div>
+            <Settings />
           ) : (
-            /* Professional Planned Module Shell (Never fake screens for unfinished modules) */
+            /* Professional Planned Module Shell */
             <div className="max-w-xl mx-auto py-16 text-center space-y-4">
               <div className="w-14 h-14 rounded-2xl bg-brand-light mx-auto flex items-center justify-center text-brand-dark border border-brand-primary/20 shadow-sm">
                 <FileCode2 size={28} />
@@ -399,7 +244,7 @@ export const App: React.FC = () => {
                 {meta.title} — {meta.milestone || 'Planned'}
               </h2>
               <p className="text-xs text-retail-muted max-w-md mx-auto leading-relaxed">
-                {meta.subtitle}. Database tables, stock audit ledger, and IPC contracts have been established. Functional UI workflows will be connected in {meta.milestone} per the project roadmap.
+                {meta.subtitle}. Database tables, stock audit ledger, and IPC contracts have been established.
               </p>
               <div className="pt-2">
                 <Button

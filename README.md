@@ -11,14 +11,16 @@
 ## Key Features
 
 - **Point of Sale (POS) Billing:** High-speed barcode scanning, keyboard navigation, multi-tender split payments (Cash, UPI, Card, Khata/Credit), item-level and bill-level discounts, and instant thermal receipt (80mm/58mm) or standard A4 GST invoice printing.
+- **Sales Returns & Customer Refunds (Milestone 6):** Full and partial returns against completed invoices, condition-based physical restocking, auditable `SALE_RETURN` stock movements, and customer Khata debit adjustments.
+- **Operating Expense Management (Milestone 6):** Tracking store overheads (rent, salaries, electricity, transport, maintenance) with draft/pending/paid statuses, avoiding double counting with inventory purchases.
 - **Complete GST & HSN Engine:** Automatic CGST/SGST (intra-state) vs IGST (inter-state) calculation based on customer state code, discount-adjusted taxable values, precision-safe integer math (paise-based arithmetic), and GSTR-1/3B summary reports.
 - **Product & Variant Catalog:** Multi-variant support for sports goods (e.g. Cricket bats in Short Handle, Long Handle, Harrow; Shoes in UK sizes 6-11; Apparel in S-XXL; Balls, pads, gloves), unique SKUs, barcodes, and HSN associations.
 - **Auditable Inventory & Stock Movements:** Every stock change (sale, purchase, return, damage write-off, physical adjustment) is recorded in an immutable audit ledger with user attribution. Hard prevention of negative stock by default.
 - **Supplier & Purchase Management (Combined Milestone 5):** Inward purchase bills, duplicate supplier invoice prevention, supplier directory, vendor Khata statement with running balances, purchase returns with quantity limits, and supplier payouts.
 - **Customer Credit & Ledger (Khata) (Combined Milestone 5):** Walk-in billing without registration, named customer accounts with credit limits, customer payment receipts with invoice allocation, and customer account statements.
-- **Unified Financial Register (Combined Milestone 5):** Inflow vs outflow ledger tracking POS sales, customer receipts, and supplier payouts.
-- **Operating Expenses:** Petty cash, shop rent, electricity, maintenance, and staff expense recording.
-- **Analytics & Reports:** Sales by date/category/brand, fast/slow moving items, stock valuation, gross margin estimation, and daily cash drawer reconciliation.
+- **Unified Financial Register:** Inflow vs outflow ledger tracking POS sales, customer receipts, and supplier payouts.
+- **Financial Reports & Analytics (Milestone 6):** Profit & Loss statement with Weighted Landed Cost COGS, Gross Margin % vs Net Operating Profit %, live stock valuation, cash flow reconciliation, and RFC 4180 CSV export.
+- **Business Controls & Data Protection (Milestone 6):** Role-Based Access Control matrix, tamper-evident audit logs, hot SQLite online backups with SHA-256 checksums, automated pre-restore safety snapshots, and CSV catalog sync.
 - **Offline Data Sovereignty:** 100% offline functionality using local SQLite (`better-sqlite3`) in WAL mode. No cloud dependency, mandatory internet connection, or external subscription.
 
 ---
@@ -31,8 +33,8 @@
 - [x] **Milestone 3:** Product Catalog & Inventory Management
 - [x] **Milestone 4:** Point of Sale (POS) & GST Billing
 - [x] **Combined Milestone 5:** Procurement, Supplier Management & Customer Accounts
-- [ ] **Milestone 6 (Future):** Business Reports & GSTR Compliance
-- [ ] **Milestone 7 (Future):** System Settings, Security & Backup Operations
+- [x] **Milestone 6:** Returns, Expenses, Reports & Business Controls
+- [ ] **Milestone 7 (Future):** Final System Polish, Release Readiness & Distribution
 
 ---
 

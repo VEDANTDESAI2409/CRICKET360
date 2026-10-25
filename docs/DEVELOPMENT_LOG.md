@@ -1,5 +1,62 @@
 # Cricket360: Development Work Log
 
+## Log Entry: 2026-10-25 - Milestone 6: Returns, Expenses, Reports & Business Controls
+
+### Summary of Work Completed
+- **1. Sales Returns & Refunds:**
+  - Implemented `ReturnsRepo` (`src/main/db/returnsRepo.ts`):
+    - Full and partial returns against completed sales invoices.
+    - Strict returnable quantity validation: `(item.quantity - item.already_returned_quantity)`.
+    - Restock control: Stock is only restored to variant and parent catalog records if `restock: true` is explicitly chosen; logs immutable `stock_movements` with `movement_type = 'SALE_RETURN'`.
+    - Proportional integer paise calculations: `propTotal = Math.round((invItem.total_amount_paise * qty) / invItem.quantity)` guaranteeing 100% precision.
+    - Refund treatments: `CASH`, `UPI`, `CARD`, `BANK_TRANSFER`, and `STORE_CREDIT`.
+    - Customer Khata reconciliation: Automatically reduces `customers.balance_paise` for credit invoice returns.
+    - Invoice status update: Marks sales invoice as `RETURNED` when all items are returned.
+  - Implemented Returns UI (`src/renderer/features/returns/Returns.tsx`): Invoice search, quantity selector, restock toggle, refund tender, and detail view modal.
+- **2. Operating Expense Management:**
+  - Implemented `ExpenseRepo` (`src/main/db/expenseRepo.ts`):
+    - Category management with 7 standard retail categories (Rent, Salaries, Utilities, Transport, Repairs, Marketing, Misc) plus custom categories.
+    - Sequential expense numbering (`EXP-YYYYMM-XXXX`).
+    - Expense creation, view, edit drafts, soft delete, and search by date range, category, and status (`PAID`, `PENDING`, `DRAFT`).
+    - Recorded amount in integer paise, payment method, payee/supplier link, and reference notes.
+    - Separate accounting classification from procurement payouts and refund tenders, eliminating double counting.
+  - Implemented Expenses UI (`src/renderer/features/expenses/Expenses.tsx`): KPI summary cards, filter bar, Record Expense modal, and Category Manager modal.
+- **3. Reports & Analytics Engine:**
+  - Implemented `ReportsRepo` (`src/main/db/reportsRepo.ts`):
+    - Sales & Returns report with gross sales, line discounts, invoice discounts, returns, net sales, and tax breakdown.
+    - Purchases and Vendor Returns summary.
+    - Profit & Loss statement with Cost of Goods Sold (COGS) based on Weighted Landed Cost, distinguishing Gross Margin % from Net Operating Profit % (deducting operating expenses).
+    - Stock Valuation report rolling up active inventory quantities by purchase landed cost across variants and standalone products.
+    - GST & HSN Tax summary: outward GSTR-1 liability vs inward ITC on purchases across CGST, SGST, and IGST without unsupported tax claims.
+    - Cash Flow Register: cash, UPI, card, bank, and store credit reconciliation across sales, customer receipts, vendor payouts, expenses, and refunds.
+    - RFC 4180 CSV Export across all reports with human-readable rupee formatting.
+  - Implemented Reports UI (`src/renderer/features/reports/Reports.tsx`): Tabbed reports interface, date range pickers, KPI highlights, and one-click CSV export.
+- **4. Business Controls, Safe Backups & Audit Trail:**
+  - Implemented `BackupService` (`src/main/services/backupService.ts`):
+    - Online SQLite snapshot using native `VACUUM INTO` with collision-safe unique filenames.
+    - SHA-256 hash generation and verification.
+    - Integrity checks (`PRAGMA integrity_check`) and SQLite magic header validation.
+    - Pre-restore safety snapshot (`PRE_RESTORE_`) created automatically before restoring any backup.
+  - Implemented `ExportImportService` (`src/main/services/exportImportService.ts`):
+    - CSV export for Products, Customers, and Sales History.
+    - Bulk Product CSV import with auto-generation of missing SKUs/barcodes and integer paise conversion.
+  - Implemented `AuditRepo` (`src/main/db/auditRepo.ts`):
+    - Tamper-evident logging of sensitive actions (`audit_logs`) with user attribution and JSON diffs.
+  - Implemented Settings UI (`src/renderer/features/settings/Settings.tsx`):
+    - Shop profile & receipt header configuration.
+    - Database backup manager with one-click snapshot creation, list, and verified restore.
+    - Safe data sync (CSV export/import).
+    - Security audit log viewer.
+    - Role-Based Access Control (RBAC) permission matrix viewer (`ADMIN`, `CASHIER`, `STAFF`).
+- **5. Verification & Test Results:**
+  - **Typecheck:** `npm run typecheck` (`tsc --noEmit`) -> 0 errors.
+  - **Automated Tests:** `npm test` (`vitest run`) -> 136 tests passing across 27 test files (37 new tests added).
+  - **Renderer Build:** `npm run build:renderer` (`vite build`) -> 0 errors.
+  - **Electron Build:** `npm run build:electron` (`esbuild`) -> 0 errors.
+  - **Smoke Test:** `npm run smoke-test` -> Electron launched and verified with 6 active database migrations.
+
+---
+
 ## Log Entry: 2026-10-25 - Combined Milestone 5: Procurement, Supplier Management & Customer Accounts
 
 ### Summary of Work Completed

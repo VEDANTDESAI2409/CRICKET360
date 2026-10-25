@@ -17,6 +17,15 @@ import {
   CreatePurchaseReturnInput,
   RecordSupplierPaymentInput,
   RecordCustomerPaymentInput,
+  CreateSalesReturnInput,
+  SalesReturnFilterQuery,
+  CreateExpenseCategoryInput,
+  CreateExpenseInput,
+  UpdateExpenseInput,
+  ExpenseFilterQuery,
+  ReportDateFilter,
+  AuditLogFilterQuery,
+  UpdateShopSettingsInput,
 } from '../../shared/types/models';
 import { IpcResult } from '../../shared/types/ipc';
 import * as productRepo from '../db/productRepo';
@@ -27,6 +36,13 @@ import { BillingRepo } from '../db/billingRepo';
 import { SupplierRepo } from '../db/supplierRepo';
 import { PurchaseRepo } from '../db/purchaseRepo';
 import { AccountRepo } from '../db/accountRepo';
+import { ReturnsRepo } from '../db/returnsRepo';
+import { ExpenseRepo } from '../db/expenseRepo';
+import { AuditRepo } from '../db/auditRepo';
+import { SettingsRepo } from '../db/settingsRepo';
+import { ReportsRepo } from '../db/reportsRepo';
+import { BackupService } from '../services/backupService';
+import { ExportImportService } from '../services/exportImportService';
 import {
   settingKeySchema,
   setSettingSchema,
@@ -43,6 +59,15 @@ import {
   createPurchaseReturnSchema,
   recordSupplierPaymentSchema,
   recordCustomerPaymentSchema,
+  createSalesReturnSchema,
+  salesReturnFilterSchema,
+  createExpenseCategorySchema,
+  createExpenseSchema,
+  updateExpenseSchema,
+  expenseFilterSchema,
+  reportDateFilterSchema,
+  auditLogFilterSchema,
+  updateShopSettingsSchema,
 } from './schemas';
 
 export function registerIpcHandlers(): void {
@@ -646,5 +671,354 @@ export function registerIpcHandlers(): void {
       return { success: false, error: err instanceof Error ? err.message : String(err) };
     }
   });
+
+  // ==========================================
+  // 14. Sales Return Handlers
+  // ==========================================
+  ipcMain.handle('returns:getAll', async (_event, filters?: unknown) => {
+    try {
+      const validated = filters ? salesReturnFilterSchema.parse(filters) : undefined;
+      const db = getDatabase();
+      const repo = new ReturnsRepo(db);
+      const list = repo.getAll(validated as SalesReturnFilterQuery);
+      return { success: true, data: list };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('returns:getById', async (_event, id: unknown) => {
+    try {
+      const returnId = Number(id);
+      if (!returnId || isNaN(returnId)) throw new Error('Valid Return ID is required');
+      const db = getDatabase();
+      const repo = new ReturnsRepo(db);
+      const ret = repo.getById(returnId);
+      return { success: true, data: ret };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('returns:create', async (_event, rawData: unknown) => {
+    try {
+      const validated = createSalesReturnSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new ReturnsRepo(db);
+      const ret = repo.create(validated as CreateSalesReturnInput);
+      return { success: true, data: ret };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('returns:getNextNumber', async () => {
+    try {
+      const db = getDatabase();
+      const repo = new ReturnsRepo(db);
+      return { success: true, data: repo.getNextReturnNumber() };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // ==========================================
+  // 15. Expense Management Handlers
+  // ==========================================
+  ipcMain.handle('expenses:getCategories', async () => {
+    try {
+      const db = getDatabase();
+      const repo = new ExpenseRepo(db);
+      return { success: true, data: repo.getCategories() };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('expenses:createCategory', async (_event, rawData: unknown) => {
+    try {
+      const validated = createExpenseCategorySchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new ExpenseRepo(db);
+      const cat = repo.createCategory(validated as CreateExpenseCategoryInput);
+      return { success: true, data: cat };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('expenses:getAll', async (_event, filters?: unknown) => {
+    try {
+      const validated = filters ? expenseFilterSchema.parse(filters) : undefined;
+      const db = getDatabase();
+      const repo = new ExpenseRepo(db);
+      return { success: true, data: repo.getAll(validated as ExpenseFilterQuery) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('expenses:getById', async (_event, id: unknown) => {
+    try {
+      const expenseId = Number(id);
+      if (!expenseId || isNaN(expenseId)) throw new Error('Valid Expense ID is required');
+      const db = getDatabase();
+      const repo = new ExpenseRepo(db);
+      return { success: true, data: repo.getById(expenseId) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('expenses:create', async (_event, rawData: unknown) => {
+    try {
+      const validated = createExpenseSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new ExpenseRepo(db);
+      const exp = repo.create(validated as CreateExpenseInput);
+      return { success: true, data: exp };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('expenses:update', async (_event, rawData: unknown) => {
+    try {
+      const validated = updateExpenseSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new ExpenseRepo(db);
+      const exp = repo.update(validated as UpdateExpenseInput);
+      return { success: true, data: exp };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('expenses:delete', async (_event, id: unknown) => {
+    try {
+      const expenseId = Number(id);
+      if (!expenseId || isNaN(expenseId)) throw new Error('Valid Expense ID is required');
+      const db = getDatabase();
+      const repo = new ExpenseRepo(db);
+      const ok = repo.delete(expenseId);
+      return { success: true, data: ok };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('expenses:getNextNumber', async () => {
+    try {
+      const db = getDatabase();
+      const repo = new ExpenseRepo(db);
+      return { success: true, data: repo.getNextExpenseNumber() };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // ==========================================
+  // 16. Reports & Business Analytics Handlers
+  // ==========================================
+  ipcMain.handle('reports:getSalesReport', async (_event, filter: unknown) => {
+    try {
+      const validated = reportDateFilterSchema.parse(filter);
+      const db = getDatabase();
+      const repo = new ReportsRepo(db);
+      return { success: true, data: repo.getSalesReport(validated as ReportDateFilter) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('reports:getPurchaseReport', async (_event, filter: unknown) => {
+    try {
+      const validated = reportDateFilterSchema.parse(filter);
+      const db = getDatabase();
+      const repo = new ReportsRepo(db);
+      return { success: true, data: repo.getPurchaseReport(validated as ReportDateFilter) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('reports:getProfitLossReport', async (_event, filter: unknown) => {
+    try {
+      const validated = reportDateFilterSchema.parse(filter);
+      const db = getDatabase();
+      const repo = new ReportsRepo(db);
+      return { success: true, data: repo.getProfitLossReport(validated as ReportDateFilter) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('reports:getInventoryValuationReport', async () => {
+    try {
+      const db = getDatabase();
+      const repo = new ReportsRepo(db);
+      return { success: true, data: repo.getInventoryValuationReport() };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('reports:getTaxReport', async (_event, filter: unknown) => {
+    try {
+      const validated = reportDateFilterSchema.parse(filter);
+      const db = getDatabase();
+      const repo = new ReportsRepo(db);
+      return { success: true, data: repo.getTaxReport(validated as ReportDateFilter) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('reports:getPaymentsSummaryReport', async (_event, filter: unknown) => {
+    try {
+      const validated = reportDateFilterSchema.parse(filter);
+      const db = getDatabase();
+      const repo = new ReportsRepo(db);
+      return { success: true, data: repo.getPaymentsSummaryReport(validated as ReportDateFilter) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('reports:exportCsv', async (_event, reportType: string, filter?: unknown) => {
+    try {
+      const validated = filter ? reportDateFilterSchema.parse(filter) : undefined;
+      const db = getDatabase();
+      const repo = new ReportsRepo(db);
+      return { success: true, data: repo.exportCsv(reportType, validated as ReportDateFilter | undefined) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // ==========================================
+  // 17. Backup & Restore Handlers
+  // ==========================================
+  ipcMain.handle('backups:create', async (_event, notes?: string) => {
+    try {
+      const service = new BackupService();
+      const backup = service.createBackup(notes);
+      return { success: true, data: backup };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('backups:getAll', async () => {
+    try {
+      const service = new BackupService();
+      return { success: true, data: service.getAllBackups() };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('backups:verify', async (_event, backupFilename: string) => {
+    try {
+      const service = new BackupService();
+      return { success: true, data: service.verifyBackup(backupFilename) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('backups:restore', async (_event, backupFilename: string) => {
+    try {
+      const service = new BackupService();
+      const res = service.restoreBackup(backupFilename);
+      return { success: true, data: res };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // ==========================================
+  // 18. Audit Logs Handler
+  // ==========================================
+  ipcMain.handle('audit:getLogs', async (_event, filters?: unknown) => {
+    try {
+      const validated = filters ? auditLogFilterSchema.parse(filters) : undefined;
+      const db = getDatabase();
+      const repo = new AuditRepo(db);
+      return { success: true, data: repo.getLogs(validated as AuditLogFilterQuery) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // ==========================================
+  // 19. System Settings Handlers
+  // ==========================================
+  ipcMain.handle('systemSettings:get', async () => {
+    try {
+      const db = getDatabase();
+      const repo = new SettingsRepo(db);
+      return { success: true, data: repo.getShopSettings() };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('systemSettings:update', async (_event, rawData: unknown) => {
+    try {
+      const validated = updateShopSettingsSchema.parse(rawData);
+      const db = getDatabase();
+      const repo = new SettingsRepo(db);
+      const updated = repo.updateShopSettings(validated as UpdateShopSettingsInput);
+      return { success: true, data: updated };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  // ==========================================
+  // 20. Export & Import Handlers
+  // ==========================================
+  ipcMain.handle('exportImport:exportProductsCsv', async () => {
+    try {
+      const db = getDatabase();
+      const service = new ExportImportService(db);
+      return { success: true, data: service.exportProductsCsv() };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('exportImport:importProductsCsv', async (_event, csvContent: string) => {
+    try {
+      const db = getDatabase();
+      const service = new ExportImportService(db);
+      return { success: true, data: service.importProductsCsv(csvContent) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('exportImport:exportCustomersCsv', async () => {
+    try {
+      const db = getDatabase();
+      const service = new ExportImportService(db);
+      return { success: true, data: service.exportCustomersCsv() };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
+
+  ipcMain.handle('exportImport:exportSalesCsv', async (_event, filter?: unknown) => {
+    try {
+      const validated = filter ? reportDateFilterSchema.parse(filter) : undefined;
+      const db = getDatabase();
+      const service = new ExportImportService(db);
+      return { success: true, data: service.exportSalesCsv(validated as ReportDateFilter | undefined) };
+    } catch (err) {
+      return { success: false, error: err instanceof Error ? err.message : String(err) };
+    }
+  });
 }
+
 

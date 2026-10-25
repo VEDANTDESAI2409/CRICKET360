@@ -62,11 +62,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'customers', label: 'Customers (Khata)', icon: <Users size={18} />, status: 'active', section: 'menu' },
     { id: 'suppliers', label: 'Suppliers', icon: <Building2 size={18} />, status: 'active', section: 'menu' },
     { id: 'payments', label: 'Payments', icon: <CreditCard size={18} />, status: 'active', section: 'menu' },
-    { id: 'returns', label: 'Returns & Refunds', icon: <RotateCcw size={18} />, status: 'planned', section: 'menu' },
+    { id: 'returns', label: 'Returns & Refunds', icon: <RotateCcw size={18} />, status: 'active', section: 'menu' },
 
     // General (Analytics & settings)
-    { id: 'reports', label: 'Reports & Analytics', icon: <BarChart3 size={18} />, status: 'planned', section: 'general' },
-    { id: 'expenses', label: 'Expenses', icon: <Wallet size={18} />, status: 'planned', section: 'general' },
+    { id: 'reports', label: 'Reports & Analytics', icon: <BarChart3 size={18} />, status: 'active', section: 'general' },
+    { id: 'expenses', label: 'Expenses', icon: <Wallet size={18} />, status: 'active', section: 'general' },
     { id: 'settings', label: 'Settings', icon: <Settings size={18} />, status: 'active', section: 'general' },
   ];
 

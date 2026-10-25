@@ -214,14 +214,80 @@ PRAGMA temp_store = MEMORY;        -- Use memory for temporary tables & sorts
   - `total_amount_paise`: INTEGER NOT NULL
 
 ### 3.8 Operating Expenses & Categories
-- **`expense_categories`**: `id`, `name`, `is_active`
-- **`expenses`**: `id`, `expense_number`, `category_id` (FK), `expense_date`, `amount_paise`, `payment_mode`, `recipient_name`, `notes`, `created_at`
+- **`expense_categories`**:
+  - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+  - `name`: TEXT NOT NULL UNIQUE
+  - `code`: TEXT NOT NULL UNIQUE
+  - `description`: TEXT
+  - `is_active`: INTEGER NOT NULL DEFAULT 1
+  - `created_at`: TEXT NOT NULL DEFAULT (datetime('now'))
+- **`expenses`**:
+  - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+  - `expense_number`: TEXT NOT NULL UNIQUE
+  - `category_id`: INTEGER NOT NULL REFERENCES `expense_categories(id)`
+  - `supplier_id`: INTEGER REFERENCES `suppliers(id)`
+  - `expense_date`: TEXT NOT NULL
+  - `amount_paise`: INTEGER NOT NULL
+  - `payment_method`: TEXT NOT NULL -- CASH, UPI, CARD, BANK_TRANSFER, CHEQUE, OTHER
+  - `payment_status`: TEXT NOT NULL DEFAULT 'PAID' -- PAID, PENDING, DRAFT
+  - `reference_number`: TEXT
+  - `notes`: TEXT
+  - `created_by`: INTEGER REFERENCES `users(id)`
+  - `created_at`: TEXT NOT NULL DEFAULT (datetime('now'))
+  - `updated_at`: TEXT NOT NULL DEFAULT (datetime('now'))
 
-### 3.9 System Administration & Audit Trail
+### 3.9 Sales Returns & Restocking Entities
+- **`sales_returns`**:
+  - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+  - `return_number`: TEXT NOT NULL UNIQUE
+  - `sales_invoice_id`: INTEGER NOT NULL REFERENCES `sales_invoices(id)`
+  - `customer_id`: INTEGER REFERENCES `customers(id)`
+  - `return_date`: TEXT NOT NULL
+  - `reason`: TEXT NOT NULL
+  - `taxable_amount_paise`: INTEGER NOT NULL DEFAULT 0
+  - `cgst_amount_paise`: INTEGER NOT NULL DEFAULT 0
+  - `sgst_amount_paise`: INTEGER NOT NULL DEFAULT 0
+  - `igst_amount_paise`: INTEGER NOT NULL DEFAULT 0
+  - `refund_amount_paise`: INTEGER NOT NULL
+  - `refund_method`: TEXT NOT NULL -- CASH, UPI, CARD, BANK_TRANSFER, STORE_CREDIT
+  - `notes`: TEXT
+  - `created_by`: INTEGER REFERENCES `users(id)`
+  - `created_at`: TEXT NOT NULL DEFAULT (datetime('now'))
+
+- **`sales_return_items`**:
+  - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+  - `sales_return_id`: INTEGER NOT NULL REFERENCES `sales_returns(id)` ON DELETE CASCADE
+  - `sales_invoice_item_id`: INTEGER NOT NULL REFERENCES `sales_invoice_items(id)`
+  - `product_id`: INTEGER NOT NULL REFERENCES `products(id)`
+  - `variant_id`: INTEGER REFERENCES `product_variants(id)`
+  - `product_name_snapshot`: TEXT NOT NULL
+  - `variant_name_snapshot`: TEXT
+  - `quantity`: INTEGER NOT NULL
+  - `unit_price_paise`: INTEGER NOT NULL
+  - `discount_amount_paise`: INTEGER NOT NULL DEFAULT 0
+  - `tax_rate_percent`: REAL NOT NULL DEFAULT 0
+  - `taxable_amount_paise`: INTEGER NOT NULL DEFAULT 0
+  - `cgst_amount_paise`: INTEGER NOT NULL DEFAULT 0
+  - `sgst_amount_paise`: INTEGER NOT NULL DEFAULT 0
+  - `igst_amount_paise`: INTEGER NOT NULL DEFAULT 0
+  - `total_amount_paise`: INTEGER NOT NULL
+  - `restock`: INTEGER NOT NULL DEFAULT 1 -- 1: physically returned to active stock; 0: damaged/written off
+  - `created_at`: TEXT NOT NULL DEFAULT (datetime('now'))
+
+### 3.10 System Administration, Audit Trail & Backups
 - **`app_settings`**: `key` (TEXT PRIMARY KEY), `value` (TEXT), `updated_at` (TEXT)
 - **`users`**: `id`, `username` (UNIQUE), `display_name`, `password_hash`, `role` ('ADMIN', 'CASHIER', 'STAFF'), `is_active`, `created_at`
 - **`audit_logs`**: `id`, `user_id` (FK), `action`, `entity_name`, `entity_id`, `details_json`, `created_at`
-- **`backup_metadata`**: `id`, `filename`, `file_size_bytes`, `backup_type`, `status`, `created_at`
+- **`backup_metadata`**:
+  - `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+  - `filename`: TEXT NOT NULL UNIQUE
+  - `file_path`: TEXT NOT NULL
+  - `file_size_bytes`: INTEGER NOT NULL
+  - `sha256_hash`: TEXT NOT NULL
+  - `backup_type`: TEXT NOT NULL DEFAULT 'MANUAL' -- MANUAL, PRE_RESTORE, SCHEDULED
+  - `status`: TEXT NOT NULL DEFAULT 'SUCCESS'
+  - `notes`: TEXT
+  - `created_at`: TEXT NOT NULL DEFAULT (datetime('now'))
 
 ---
 
@@ -252,6 +318,14 @@ Migrations are version-controlled `.sql` files stored under `src/main/db/migrati
    - Enhances `payments` table with `payment_type` ('SALE_INVOICE', 'CUSTOMER_PAYMENT', 'SUPPLIER_PAYOUT'), `purchase_id`, and `balance_paise_snapshot`.
    - Configures `purchase_prefix` (`PUR-`), `purchase_return_prefix` (`PR-`), `payment_receipt_prefix` (`REC-`), and `payment_payout_prefix` (`PAY-`) in `app_settings`.
    - Adds composite performance indices: `idx_purchases_supplier_date`, `idx_purchases_status`, `idx_purchase_items_purchase`, `idx_purchase_returns_pur`, `idx_payments_party_type`, and `idx_payments_purchase`.
+6. `006_returns_expenses_and_controls.sql` (Milestone 6):
+   - Creates `sales_returns` and `sales_return_items` tables with return reasons, item-level restock control, and proportional tax/discount snapshots.
+   - Creates `expense_categories` and `expenses` tables with integer paise amounts, payee links, and payment statuses (`PAID`, `PENDING`, `DRAFT`).
+   - Creates `audit_logs` table for tracking security-sensitive and business actions.
+   - Creates `backup_metadata` table for tracking database backup snapshots and SHA-256 integrity hashes.
+   - Configures sequence settings in `app_settings`: `sales_return_prefix` (`SR-`), `next_sales_return_number` (`1001`), `expense_prefix` (`EXP-`), `next_expense_number` (`1001`).
+   - Seeds standard retail expense categories (Rent, Salaries, Utilities, Transport & Logistics, Repairs & Maintenance, Marketing & Promotion, Miscellaneous).
+   - Adds performance indices: `idx_sales_returns_invoice`, `idx_sales_returns_customer`, `idx_sales_returns_date`, `idx_sales_return_items_return`, `idx_expenses_category`, `idx_expenses_date`, `idx_expenses_status`, `idx_audit_logs_action`, `idx_audit_logs_created`.
 
 A dedicated migration tracking table `_schema_migrations` tracks installed migrations:
 ```sql
